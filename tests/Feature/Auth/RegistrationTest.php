@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\assertAuthenticated;
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;

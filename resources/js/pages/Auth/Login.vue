@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import { login, register } from '@/routes'
+import { request as passwordRequest } from '@/routes/password'
 import InputLabel from '@/components/InputLabel.vue'
 import TextInput from '@/components/TextInput.vue'
 import InputError from '@/components/InputError.vue'
@@ -46,7 +47,15 @@ const submit = () => {
         </div>
 
         <div class="mt-4">
-          <InputLabel for="password" value="Password" />
+          <div class="flex items-center justify-between">
+            <InputLabel for="password" value="Password" />
+            <Link
+              :href="passwordRequest.url()"
+              class="text-sm text-purple-400 hover:text-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 transition"
+            >
+              Forgot your password?
+            </Link>
+          </div>
           <TextInput
             id="password"
             type="password"
