@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3'
+import { show } from '@/actions/App/Http/Controllers/ProjectController'
+
 const props = defineProps<{
     project: {
         id: number
@@ -22,9 +25,9 @@ const formattedDate = new Intl.DateTimeFormat('en-US', {
 </script>
 
 <template>
-    <div class="bg-slate-800 rounded-lg shadow border border-slate-700 overflow-hidden hover:border-purple-500 transition-colors flex flex-col h-full">
-        <div class="p-5 flex-1">
-            <h3 class="text-lg font-semibold text-white mb-1">
+    <div class="bg-slate-800 rounded-lg shadow border border-slate-700 overflow-hidden hover:border-purple-500 transition-colors flex flex-col h-full group">
+        <Link :href="show.url(project.id)" class="p-5 flex-1 block">
+            <h3 class="text-lg font-semibold text-white mb-1 group-hover:text-purple-400 transition-colors">
                 {{ project.name }}
             </h3>
             <p v-if="project.description" class="text-slate-400 text-sm line-clamp-2 mb-4">
@@ -45,7 +48,7 @@ const formattedDate = new Intl.DateTimeFormat('en-US', {
                     Updated {{ formattedDate }}
                 </div>
             </div>
-        </div>
+        </Link>
         
         <div class="bg-slate-900/50 px-5 py-3 border-t border-slate-700 flex justify-end space-x-3">
             <button 

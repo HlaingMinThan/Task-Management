@@ -3,6 +3,7 @@
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(LazilyRefreshDatabase::class);
 
@@ -16,7 +17,7 @@ test('dashboard displays user projects and not others', function () {
     $this->actingAs($user1)
         ->get('/dashboard')
         ->assertOk()
-        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Dashboard')
             ->has('projects', 1)
             ->where('projects.0.name', 'Project 1')

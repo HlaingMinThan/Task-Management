@@ -40,6 +40,22 @@ class ProjectController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Project $project)
+    {
+        Gate::authorize('view', $project);
+
+        $project->load(['columns' => function ($query) {
+            $query->orderBy('position');
+        }]);
+
+        return inertia('Board/Show', [
+            'project' => $project,
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(UpdateProjectRequest $request, Project $project)

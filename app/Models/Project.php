@@ -24,4 +24,26 @@ class Project extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the columns for the project.
+     */
+    public function columns()
+    {
+        return $this->hasMany(Column::class);
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Project $project) {
+            $project->columns()->createMany([
+                ['title' => 'To Do', 'position' => 1],
+                ['title' => 'Doing', 'position' => 2],
+                ['title' => 'Done', 'position' => 3],
+            ]);
+        });
+    }
 }
