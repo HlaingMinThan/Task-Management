@@ -5,26 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Column extends Model
+class Task extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'column_id',
         'project_id',
         'title',
+        'description',
+        'priority',
+        'due_date',
         'position',
     ];
 
-    /**
-     * Get the project that owns the column.
-     */
+    public function column()
+    {
+        return $this->belongsTo(Column::class);
+    }
+
     public function project()
     {
         return $this->belongsTo(Project::class);
-    }
-
-    public function tasks()
-    {
-        return $this->hasMany(Task::class)->orderBy('position');
     }
 }

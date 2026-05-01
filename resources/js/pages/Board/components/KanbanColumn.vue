@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { ref, watch } from 'vue'
+import { useForm, router } from '@inertiajs/vue3'
 import { update, destroy } from '@/actions/App/Http/Controllers/ColumnController'
+import { reorder as reorderTasks } from '@/actions/App/Http/Controllers/TaskController'
 import DeleteModal from '@/Components/DeleteModal.vue'
+import TaskCard from './TaskCard.vue'
+import TaskFormModal from './TaskFormModal.vue'
+import { VueDraggable } from 'vue-draggable-plus'
 
 const props = defineProps<{
     projectId: number
@@ -10,8 +14,22 @@ const props = defineProps<{
         id: number
         title: string
         position: number
+        tasks: Array<{
+            id: number
+            title: string
+            description?: string
+            priority: 'low' | 'medium' | 'high'
+            due_date?: string
+            position: number
+        }>
     }
 }>()
+
+const tasks = ref([...(props.column.tasks ?? [])])
+
+watch(() => props.column.tasks, (newTasks) => {
+    tasks.value = [...(newTasks ?? [])]
+}, { deep: true })
 
 const isEditing = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -48,6 +66,35 @@ const isDeleteModalOpen = ref(false)
 
 function confirmDelete() {
     isDeleteModalOpen.value = true
+}
+
+const isTaskModalOpen = ref(false)
+const selectedTask = ref<any>(null)
+
+function addTask() {
+    alert('hi');
+    selectedTask.value = null
+    isTaskModalOpen.value = true
+}
+
+function editTask(task: any) {
+    selectedTask.value = task
+    isTaskModalOpen.value = true
+}
+
+function handleTaskReorder() {
+    const payload = tasks.value.map((task, index) => ({
+        id: task.id,
+        position: index + 1
+    }))
+
+    router.post(reorderTasks.url(props.projectId), {
+        column_id: props.column.id,
+        tasks: payload
+    }, {
+        preserveScroll: true,
+        preserveState: true
+    })
 }
 </script>
 
@@ -95,17 +142,34 @@ function confirmDelete() {
             </button>
         </div>
 
-        <!-- Column Body (Tasks will go here) -->
+        <!-- Column Body -->
         <div class="p-2 flex-1 overflow-y-auto min-h-[100px]">
-            <!-- Placeholder for tasks -->
-            <div class="text-xs text-slate-500 text-center mt-4">
+            <VueDraggable
+                v-model="tasks"
+                group="tasks"
+                @change="handleTaskReorder"
+                :animation="150"
+                class="min-h-[50px]"
+            >
+                <TaskCard
+                    v-for="task in tasks"
+                    :key="task.id"
+                    :task="task"
+                    @click="editTask(task)"
+                />
+            </VueDraggable>
+            
+            <div v-if="tasks.length === 0" class="text-xs text-slate-500 text-center mt-4">
                 No tasks yet
             </div>
         </div>
         
         <!-- Add Task Button -->
         <div class="p-2 border-t border-slate-700">
-            <button class="w-full flex items-center justify-center py-2 px-4 rounded text-sm text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+            <button 
+                @click="addTask"
+                class="w-full flex items-center justify-center py-2 px-4 rounded text-sm text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
@@ -117,8 +181,16 @@ function confirmDelete() {
             :show="isDeleteModalOpen"
             :url="destroy.url([projectId, column.id])"
             title="Delete Column"
-            :message="`Are you sure you want to delete '${column.title}'?`"
+            :message="`Are you sure you want to delete '${column.title}'? This will also delete all tasks in this column.`"
             @close="isDeleteModalOpen = false"
+        />
+
+        <TaskFormModal
+            :show="isTaskModalOpen"
+            :project-id="projectId"
+            :column-id="column.id"
+            :task="selectedTask"
+            @close="isTaskModalOpen = false"
         />
     </div>
 </template>

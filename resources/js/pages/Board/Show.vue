@@ -15,6 +15,7 @@ const props = defineProps<{
             id: number
             title: string
             position: number
+            tasks: Array<any>
         }>
     }
 }>()

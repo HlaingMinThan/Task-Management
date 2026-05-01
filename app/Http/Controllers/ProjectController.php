@@ -47,7 +47,9 @@ class ProjectController extends Controller
         Gate::authorize('view', $project);
 
         $project->load(['columns' => function ($query) {
-            $query->orderBy('position');
+            $query->orderBy('position')->with(['tasks' => function ($query) {
+                $query->orderBy('position');
+            }]);
         }]);
 
         return inertia('Board/Show', [
