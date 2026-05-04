@@ -6,6 +6,7 @@ const props = defineProps<{
     url: string | null
     title?: string
     message?: string
+    onSuccess?: () => void
 }>()
 
 const emit = defineEmits<{
@@ -18,7 +19,10 @@ function deleteItem() {
     if (!props.url) return
     
     form.delete(props.url, {
-        onSuccess: () => emit('close'),
+        onSuccess: () => {
+            emit('close')
+            props.onSuccess?.()
+        },
     })
 }
 </script>

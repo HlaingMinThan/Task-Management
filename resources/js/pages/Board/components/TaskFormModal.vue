@@ -179,9 +179,9 @@ function handleDelete() {
             :show="isDeleteModalOpen"
             :url="destroy.url([projectId, task.id])"
             title="Delete Task"
-            :message="`Are you sure you want to delete '${task.title}'?` "
+            :message="`Are you sure you want to delete '${task.title}'?`"
             @close="isDeleteModalOpen = false"
-            @success="emit('close')"
+            :on-success="() => emit('close')"
         />
     </Teleport>
 </template>
