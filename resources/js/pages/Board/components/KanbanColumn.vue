@@ -72,7 +72,6 @@ const isTaskModalOpen = ref(false)
 const selectedTask = ref<any>(null)
 
 function addTask() {
-    alert('hi');
     selectedTask.value = null
     isTaskModalOpen.value = true
 }
