@@ -46,7 +46,7 @@ Before getting started, make sure you have the following installed:
 ### 1. Clone the repository
 
 ```bash
-git clone git@github.com:HlaingMinThan/Task-Management.git
+git clone git@github.com:HlaingMinThan/Task-Management.git taskflow
 cd taskflow
 ```
 
