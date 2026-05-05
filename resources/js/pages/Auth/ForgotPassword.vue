@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
-import InputError from '@/components/InputError.vue'
-import InputLabel from '@/components/InputLabel.vue'
-import TextInput from '@/components/TextInput.vue'
+import InputError from '@/Components/InputError.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import TextInput from '@/Components/TextInput.vue'
 import { email as passwordEmail } from '@/routes/password'
 
 defineProps<{
