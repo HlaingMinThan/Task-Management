@@ -78,7 +78,7 @@ function closeDeleteModal() {
     <header class="bg-slate-800 shadow sticky top-0 z-10 border-b border-slate-700">
       <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <h2 class="font-bold text-2xl leading-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-          Projects
+          TestProject
         </h2>
         
         <div class="flex items-center space-x-4">
