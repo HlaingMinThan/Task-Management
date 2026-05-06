@@ -78,15 +78,45 @@ class ProjectMemberController extends Controller
             ]);
         }
 
-        // Create the invite
-        $invite = ProjectInvite::create([
-            'project_id' => $project->id,
-            'email' => $validated['email'],
-            'token' => Str::random(32),
-            'role' => $validated['role'],
-            'invited_by' => auth()->id(),
-            'expires_at' => now()->addHours(24),
-        ]);
+        // Create the invite (handle unique constraint if an invite record exists)
+        try {
+            $invite = ProjectInvite::create([
+                'project_id' => $project->id,
+                'email' => $validated['email'],
+                'token' => Str::random(32),
+                'role' => $validated['role'],
+                'invited_by' => auth()->id(),
+                'expires_at' => now()->addHours(24),
+            ]);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // Find existing invite record
+            $existing = ProjectInvite::where('project_id', $project->id)
+                ->where('email', $validated['email'])
+                ->first();
+
+            if (! $existing) {
+                // Unexpected — rethrow
+                throw $e;
+            }
+
+            // If there's an active pending invite that hasn't expired, return error
+            if ($existing->status === 'pending' && $existing->expires_at && $existing->expires_at->isFuture()) {
+                return back()->withErrors([
+                    'email' => 'An invitation for this email is already pending.',
+                ]);
+            }
+
+            // Otherwise reuse/update the existing invite record to become a fresh pending invite
+            $existing->update([
+                'token' => Str::random(32),
+                'role' => $validated['role'],
+                'status' => 'pending',
+                'invited_by' => auth()->id(),
+                'expires_at' => now()->addHours(24),
+            ]);
+
+            $invite = $existing;
+        }
 
         // Send invitation email
         Mail::send(new InviteProjectMember($invite));

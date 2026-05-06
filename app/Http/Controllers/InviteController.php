@@ -6,6 +6,7 @@ use App\Models\ProjectInvite;
 use App\Models\ProjectMember;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InviteController extends Controller
 {
@@ -47,6 +48,11 @@ class InviteController extends Controller
         $user = User::where('email', $invite->email)->first();
 
         if (! $user) {
+            // Clear any existing session so the guest register route won't bounce to dashboard.
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             // Create new user - redirect to register page
             return redirect()->route('register', [
                 'email' => $invite->email,
