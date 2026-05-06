@@ -37,4 +37,31 @@ class User extends Authenticatable
     {
         return $this->hasMany(Project::class);
     }
+
+    /**
+     * Get the projects this user is a member of.
+     */
+    public function projectMembers()
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    /**
+     * Get the project invites for this user (as inviter).
+     */
+    public function projectInvites()
+    {
+        return $this->hasMany(ProjectInvite::class, 'invited_by');
+    }
+
+    /**
+     * Check if user is a member of a project.
+     */
+    public function isMemberOf(Project $project): bool
+    {
+        return $this->projectMembers()
+            ->where('project_id', $project->id)
+            ->where('status', 'active')
+            ->exists();
+    }
 }

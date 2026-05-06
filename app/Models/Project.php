@@ -34,6 +34,22 @@ class Project extends Model
     }
 
     /**
+     * Get the project members.
+     */
+    public function members()
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    /**
+     * Get the pending project invites.
+     */
+    public function invites()
+    {
+        return $this->hasMany(ProjectInvite::class);
+    }
+
+    /**
      * The "booted" method of the model.
      */
     protected static function booted(): void

@@ -20,7 +20,13 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
-        return $user->id === $task->project->user_id;
+        // Owner can always view
+        if ($user->id === $task->project->user_id) {
+            return true;
+        }
+
+        // Check if user is a member of the project
+        return $user->isMemberOf($task->project);
     }
 
     /**
@@ -36,7 +42,13 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        return $user->id === $task->project->user_id;
+        // Owner can always update
+        if ($user->id === $task->project->user_id) {
+            return true;
+        }
+
+        // Check if user is a member of the project
+        return $user->isMemberOf($task->project);
     }
 
     /**
@@ -44,6 +56,7 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task): bool
     {
+        // Only owner can delete tasks
         return $user->id === $task->project->user_id;
     }
 

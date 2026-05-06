@@ -36,7 +36,13 @@ class ColumnPolicy
      */
     public function update(User $user, Column $column): bool
     {
-        return $user->id === $column->project->user_id;
+        // Owner can always update
+        if ($user->id === $column->project->user_id) {
+            return true;
+        }
+
+        // Check if user is a member of the project
+        return $user->isMemberOf($column->project);
     }
 
     /**
@@ -44,6 +50,7 @@ class ColumnPolicy
      */
     public function delete(User $user, Column $column): bool
     {
+        // Only owner can delete columns
         return $user->id === $column->project->user_id;
     }
 }
