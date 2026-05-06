@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, router, Link } from '@inertiajs/vue3';
+import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import InputError from '@/components/InputError.vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{
@@ -11,14 +12,20 @@ const props = defineProps<{
 
 const form = useForm({ email: '', role: 'member' });
 const processing = ref(false);
+const page = usePage();
+const successMessage = ref<string | null>(null);
 
 function submitInvite() {
     processing.value = true;
     form.post(`/projects/${props.project.id}/members`, {
         onSuccess: () => {
+            successMessage.value = 'Sent invitation';
             form.reset();
             processing.value = false;
-            router.reload();
+            setTimeout(() => {
+                successMessage.value = null;
+                router.reload();
+            }, 1500);
         },
         onError: () => {
             processing.value = false;
@@ -53,7 +60,7 @@ function cancelInvite(inviteId: number) {
             >
                 <div class="flex items-center space-x-4">
                     <Link
-                        href="/dashboard"
+                        :href="`/projects/${project.id}`"
                         class="text-slate-400 transition hover:text-white"
                     >
                         <svg
@@ -77,9 +84,15 @@ function cancelInvite(inviteId: number) {
                     <div>
                         <Link
                             :href="`/projects/${project.id}/members`"
-                            class="ml-4 inline-flex items-center rounded bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600"
-                            >Members</Link
+                            :class="[
+                                'ml-4 inline-flex items-center rounded px-3 py-1.5 text-sm text-white transition',
+                                page.url.includes('/members')
+                                    ? 'bg-purple-600 hover:bg-purple-500'
+                                    : 'bg-slate-700 hover:bg-slate-600',
+                            ]"
                         >
+                            Members
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -90,6 +103,32 @@ function cancelInvite(inviteId: number) {
                 <h1 class="mb-4 text-2xl font-semibold text-white">
                     Project Members
                 </h1>
+
+                <div
+                    v-if="successMessage"
+                    class="mb-4 flex items-center rounded border border-emerald-600 bg-emerald-900/40 p-4 text-sm text-emerald-200"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="mr-3 h-5 w-5 flex-shrink-0 text-emerald-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                    >
+                        <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd"
+                        />
+                    </svg>
+                    {{ successMessage }}
+                </div>
+
+                <div
+                    v-if="form.errors.email"
+                    class="mb-4 rounded border border-red-700 bg-red-900/20 p-3 text-sm text-red-300"
+                >
+                    {{ form.errors.email }}
+                </div>
 
                 <section class="mb-6 rounded bg-slate-800 p-4">
                     <h2 class="mb-2 text-lg font-medium text-white">
@@ -118,6 +157,7 @@ function cancelInvite(inviteId: number) {
                             Send
                         </button>
                     </div>
+                    <InputError :message="form.errors.email" />
                     <p class="mt-2 text-sm text-slate-400">
                         Invited users receive an email with a link to accept the
                         invite.
