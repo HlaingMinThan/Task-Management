@@ -2,9 +2,9 @@
 import { ref, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { logout } from '@/routes'
-import ProjectCard from '@/Components/ProjectCard.vue'
-import ProjectFormModal from '@/Components/ProjectFormModal.vue'
-import DeleteModal from '@/Components/DeleteModal.vue'
+import ProjectCard from '@/components/ProjectCard.vue'
+import ProjectFormModal from '@/components/ProjectFormModal.vue'
+import DeleteModal from '@/components/DeleteModal.vue'
 import { destroy } from '@/actions/App/Http/Controllers/ProjectController'
 import { useDebounceFn } from '@vueuse/core'
 
