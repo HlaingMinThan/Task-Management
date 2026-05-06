@@ -26,6 +26,7 @@ class TaskFactory extends Factory
             'description' => $this->faker->paragraph(),
             'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
             'due_date' => $this->faker->dateTimeBetween('now', '+1 year'),
+            'assigned_user_id' => null,
             'position' => 0,
         ];
     }
