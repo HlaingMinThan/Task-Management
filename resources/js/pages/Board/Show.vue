@@ -30,22 +30,6 @@ watch(() => props.project.columns, (newColumns) => {
 
 const viewMode = ref<'board' | 'list'>('board')
 
-const allTasks = computed(() => {
-    const tasks = []
-    for (const column of columns.value) {
-        if (column.tasks) {
-            for (const task of column.tasks) {
-                tasks.push({
-                    ...task,
-                    column_id: column.id,
-                    column_title: column.title,
-                })
-            }
-        }
-    }
-    return tasks
-})
-
 const isAddingColumn = ref(false)
 const form = useForm({
     title: ''
@@ -180,7 +164,6 @@ function handleReorder() {
             <template v-else>
                 <div class="h-full px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
                     <TaskList 
-                        :tasks="allTasks" 
                         :columns="columns" 
                         :project-id="project.id" 
                     />
