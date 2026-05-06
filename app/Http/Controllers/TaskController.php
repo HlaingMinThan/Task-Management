@@ -50,7 +50,15 @@ class TaskController extends Controller
             'description' => ['nullable', 'string'],
             'priority' => ['required', 'in:low,medium,high'],
             'due_date' => ['nullable', 'date'],
+            'column_id' => ['sometimes', 'required', 'exists:columns,id'],
         ]);
+
+        if (isset($validated['column_id'])) {
+            $column = \App\Models\Column::findOrFail($validated['column_id']);
+            if ($column->project_id !== $project->id) {
+                abort(403);
+            }
+        }
 
         $task->update($validated);
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { store, reorder } from '@/actions/App/Http/Controllers/ColumnController'
 import KanbanColumn from './components/KanbanColumn.vue'
+import TaskList from './components/TaskList.vue'
 import { useForm } from '@inertiajs/vue3'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -26,6 +27,24 @@ const columns = ref([...props.project.columns])
 watch(() => props.project.columns, (newColumns) => {
     columns.value = [...newColumns]
 }, { deep: true })
+
+const viewMode = ref<'board' | 'list'>('board')
+
+const allTasks = computed(() => {
+    const tasks = []
+    for (const column of columns.value) {
+        if (column.tasks) {
+            for (const task of column.tasks) {
+                tasks.push({
+                    ...task,
+                    column_id: column.id,
+                    column_title: column.title,
+                })
+            }
+        }
+    }
+    return tasks
+})
 
 const isAddingColumn = ref(false)
 const form = useForm({
@@ -75,70 +94,98 @@ function handleReorder() {
                         </h2>
                     </div>
                 </div>
+                
+                <div class="flex items-center space-x-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700">
+                    <button 
+                        @click="viewMode = 'board'" 
+                        :class="{'bg-slate-700 text-white shadow-sm': viewMode === 'board', 'text-slate-400 hover:text-slate-300': viewMode !== 'board'}" 
+                        class="px-3 py-1.5 rounded text-sm font-medium transition-all"
+                    >
+                        Board
+                    </button>
+                    <button 
+                        @click="viewMode = 'list'" 
+                        :class="{'bg-slate-700 text-white shadow-sm': viewMode === 'list', 'text-slate-400 hover:text-slate-300': viewMode !== 'list'}" 
+                        class="px-3 py-1.5 rounded text-sm font-medium transition-all"
+                    >
+                        List
+                    </button>
+                </div>
             </div>
         </header>
 
         <!-- Board Area -->
         <main class="flex-1 overflow-x-auto overflow-y-hidden">
-            <div class="h-full px-4 sm:px-6 lg:px-8 py-6 inline-flex items-start space-x-6">
-                
-                <!-- Columns -->
-                <VueDraggable
-                    v-model="columns"
-                    @end="handleReorder"
-                    class="flex items-start space-x-6"
-                    handle=".column-handle"
-                    :animation="150"
-                >
-                    <KanbanColumn
-                        v-for="column in columns"
-                        :key="column.id"
-                        :column="column"
-                        :project-id="project.id"
-                    />
-                </VueDraggable>
-
-                <!-- Add Column Button -->
-                <div class="shrink-0 w-80">
-                    <div v-if="!isAddingColumn" 
-                         @click="isAddingColumn = true"
-                         class="bg-slate-800/50 hover:bg-slate-800 border border-slate-700 border-dashed rounded-lg p-3 cursor-pointer transition-colors flex items-center text-slate-400 hover:text-slate-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        Add Column
-                    </div>
+            <template v-if="viewMode === 'board'">
+                <div class="h-full px-4 sm:px-6 lg:px-8 py-6 inline-flex items-start space-x-6">
                     
-                    <div v-else class="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                        <form @submit.prevent="submitNewColumn">
-                            <input 
-                                v-model="form.title"
-                                type="text"
-                                placeholder="Column title..."
-                                class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500 mb-3"
-                                autofocus
-                            >
-                            <div class="flex items-center space-x-2">
-                                <button 
-                                    type="submit"
-                                    :disabled="form.processing || !form.title"
-                                    class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded text-sm font-medium transition disabled:opacity-50"
-                                >
-                                    Add
-                                </button>
-                                <button 
-                                    type="button"
-                                    @click="isAddingColumn = false; form.reset()"
-                                    class="text-slate-400 hover:text-slate-300 px-2 py-1.5 text-sm"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                    <!-- Columns -->
+                    <VueDraggable
+                        v-model="columns"
+                        @end="handleReorder"
+                        class="flex items-start space-x-6"
+                        handle=".column-handle"
+                        :animation="150"
+                    >
+                        <KanbanColumn
+                            v-for="column in columns"
+                            :key="column.id"
+                            :column="column"
+                            :project-id="project.id"
+                        />
+                    </VueDraggable>
 
-            </div>
+                    <!-- Add Column Button -->
+                    <div class="shrink-0 w-80">
+                        <div v-if="!isAddingColumn" 
+                             @click="isAddingColumn = true"
+                             class="bg-slate-800/50 hover:bg-slate-800 border border-slate-700 border-dashed rounded-lg p-3 cursor-pointer transition-colors flex items-center text-slate-400 hover:text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Add Column
+                        </div>
+                        
+                        <div v-else class="bg-slate-800 border border-slate-700 rounded-lg p-3">
+                            <form @submit.prevent="submitNewColumn">
+                                <input 
+                                    v-model="form.title"
+                                    type="text"
+                                    placeholder="Column title..."
+                                    class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500 mb-3"
+                                    autofocus
+                                >
+                                <div class="flex items-center space-x-2">
+                                    <button 
+                                        type="submit"
+                                        :disabled="form.processing || !form.title"
+                                        class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded text-sm font-medium transition disabled:opacity-50"
+                                    >
+                                        Add
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        @click="isAddingColumn = false; form.reset()"
+                                        class="text-slate-400 hover:text-slate-300 px-2 py-1.5 text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </template>
+            <template v-else>
+                <div class="h-full px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
+                    <TaskList 
+                        :tasks="allTasks" 
+                        :columns="columns" 
+                        :project-id="project.id" 
+                    />
+                </div>
+            </template>
         </main>
     </div>
 </template>
