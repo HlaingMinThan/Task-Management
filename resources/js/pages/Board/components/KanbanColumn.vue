@@ -146,7 +146,9 @@ function handleTaskReorder() {
             <VueDraggable
                 v-model="tasks"
                 group="tasks"
-                @change="handleTaskReorder"
+                @add="handleTaskReorder"
+                @remove="handleTaskReorder"
+                @update="handleTaskReorder"
                 :animation="150"
                 class="min-h-[50px]"
             >
