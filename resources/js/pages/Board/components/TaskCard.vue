@@ -21,7 +21,10 @@ const priorityClass = computed(() => {
 })
 
 const formattedDate = computed(() => {
-    if (!props.task.due_date) return null
+    if (!props.task.due_date) {
+return null
+}
+
     return new Intl.DateTimeFormat('en-US', {
         month: 'short',
         day: 'numeric'
@@ -29,7 +32,10 @@ const formattedDate = computed(() => {
 })
 
 const isOverdue = computed(() => {
-    if (!props.task.due_date) return false
+    if (!props.task.due_date) {
+return false
+}
+
     return new Date(props.task.due_date) < new Date(new Date().setHours(0, 0, 0, 0))
 })
 </script>

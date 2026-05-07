@@ -14,7 +14,7 @@ const form = useForm({});
 
 function accept() {
     form.post(`/invites/${props.token}/accept`, {
-        onSuccess: (page) => {
+        onSuccess: () => {
             // In most cases controller handles redirect; nothing special here
         },
     });

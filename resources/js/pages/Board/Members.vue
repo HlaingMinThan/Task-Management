@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
-import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{
     project: { id: number; name: string };
@@ -34,14 +34,20 @@ function submitInvite() {
 }
 
 function removeMember(memberId: number) {
-    if (!confirm('Remove this member from project?')) return;
+    if (!confirm('Remove this member from project?')) {
+return;
+}
+
     router.delete(`/projects/${props.project.id}/members/${memberId}`, {
         onSuccess: () => router.reload(),
     });
 }
 
 function cancelInvite(inviteId: number) {
-    if (!confirm('Cancel this pending invitation?')) return;
+    if (!confirm('Cancel this pending invitation?')) {
+return;
+}
+
     router.delete(`/projects/${props.project.id}/invites/${inviteId}`, {
         onSuccess: () => router.reload(),
     });

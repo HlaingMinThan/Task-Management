@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import { ref, watch } from 'vue'
 import { store, update } from '@/actions/App/Http/Controllers/ProjectController'
+import InputError from './InputError.vue'
 import InputLabel from './InputLabel.vue'
 import TextInput from './TextInput.vue'
-import InputError from './InputError.vue'
 
 const props = defineProps<{
     show: boolean

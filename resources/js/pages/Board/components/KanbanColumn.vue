@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { VueDraggable } from 'vue-draggable-plus';
 import {
     update,
     destroy,
@@ -9,7 +10,6 @@ import { reorder as reorderTasks } from '@/actions/App/Http/Controllers/TaskCont
 import DeleteModal from '@/components/DeleteModal.vue';
 import TaskCard from './TaskCard.vue';
 import TaskFormModal from './TaskFormModal.vue';
-import { VueDraggable } from 'vue-draggable-plus';
 
 const props = defineProps<{
     projectId: number;
@@ -58,6 +58,7 @@ function saveEdit() {
     if (!form.title || form.title === props.column.title) {
         isEditing.value = false;
         form.title = props.column.title;
+
         return;
     }
 
