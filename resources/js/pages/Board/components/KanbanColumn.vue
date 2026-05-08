@@ -21,6 +21,7 @@ const props = defineProps<{
             priority: 'low' | 'medium' | 'high'
             due_date?: string
             position: number
+            assignees?: Array<any>
         }>
     }
 }>()

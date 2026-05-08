@@ -8,6 +8,13 @@ const props = defineProps<{
         description?: string
         priority: 'low' | 'medium' | 'high'
         due_date?: string
+        assignees?: Array<{
+            id: number
+            user?: {
+                id: number
+                name: string
+            }
+        }>
     }
 }>()
 
@@ -32,6 +39,10 @@ const isOverdue = computed(() => {
     if (!props.task.due_date) return false
     return new Date(props.task.due_date) < new Date(new Date().setHours(0, 0, 0, 0))
 })
+
+const firstAssignee = computed(() => {
+    return (props.task.assignees && props.task.assignees.length) ? (props.task.assignees[0].user ?? null) : null
+})
 </script>
 
 <template>
@@ -45,6 +56,15 @@ const isOverdue = computed(() => {
         <h4 class="text-sm font-medium text-white mb-2 leading-tight">
             {{ task.title }}
         </h4>
+
+        <div v-if="firstAssignee" class="flex items-center text-xs text-slate-400 mb-2">
+            <div class="h-5 w-5 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white mr-2">
+                {{ firstAssignee.name ? firstAssignee.name.charAt(0) : '' }}
+            </div>
+            <div class="truncate">
+                {{ firstAssignee.name }}
+            </div>
+        </div>
         
         <div v-if="formattedDate" class="flex items-center text-[11px]" :class="isOverdue ? 'text-red-400' : 'text-slate-400'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
