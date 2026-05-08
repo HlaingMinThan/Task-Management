@@ -1,109 +1,214 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
-import { reorder as reorderColumns, store as storeColumn } from '@/actions/App/Http/Controllers/ColumnController'
-import { VueDraggable } from 'vue-draggable-plus'
-import TaskListGroup from './TaskListGroup.vue'
-import TaskFormModal from './TaskFormModal.vue'
+import { router, useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { VueDraggable } from 'vue-draggable-plus';
+import {
+    reorder as reorderColumns,
+    store as storeColumn,
+} from '@/actions/App/Http/Controllers/ColumnController';
+import TaskFormModal from './TaskFormModal.vue';
+import TaskListGroup from './TaskListGroup.vue';
+
+type Task = {
+    id: number;
+    column_id?: number;
+    title: string;
+    description?: string;
+    priority: 'low' | 'medium' | 'high';
+    due_date?: string;
+    position: number;
+};
+
+type Column = {
+    id: number;
+    title: string;
+    position: number;
+    tasks: Array<Task>;
+};
 
 const props = defineProps<{
-    projectId: number
-    columns: Array<{
-        id: number
-        title: string
-        position: number
-        tasks: Array<{
-            id: number
-            title: string
-            description?: string
-            priority: 'low' | 'medium' | 'high'
-            due_date?: string
-            position: number
-        }>
-    }>
-}>()
+    projectId: number;
+    columns: Array<Column>;
+}>();
 
-const localColumns = ref([...props.columns])
+const emit = defineEmits<{
+    (
+        e: 'taskListChange',
+        columnId: number,
+        tasks: Array<Task>,
+        persist?: boolean,
+    ): void;
+}>();
 
-watch(() => props.columns, (newCols) => {
-    localColumns.value = [...newCols]
-}, { deep: true })
+const localColumns = ref([...props.columns]);
 
-const sortField = ref<'title' | 'priority' | 'due_date'>('title')
-const sortDirection = ref<'asc' | 'desc'>('asc')
+watch(
+    () => props.columns,
+    (newCols) => {
+        localColumns.value = [...newCols];
+    },
+    { deep: true },
+);
+
+const sortField = ref<'title' | 'priority' | 'due_date'>('title');
+const sortDirection = ref<'asc' | 'desc'>('asc');
 
 function toggleSort(field: typeof sortField.value) {
     if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
     } else {
-        sortField.value = field
-        sortDirection.value = 'asc'
+        sortField.value = field;
+        sortDirection.value = 'asc';
     }
 }
 
 function handleColumnReorder() {
     const payload = localColumns.value.map((column, index) => ({
         id: column.id,
-        position: index + 1
-    }))
+        position: index + 1,
+    }));
 
-    router.post(reorderColumns.url(props.projectId), {
-        columns: payload
-    }, {
-        preserveScroll: true,
-        preserveState: true
-    })
+    router.post(
+        reorderColumns.url(props.projectId),
+        {
+            columns: payload,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+        },
+    );
+}
+
+function handleTaskListChange(
+    columnId: number,
+    tasks: Array<Task>,
+    persist = true,
+) {
+    const taskIds = new Set(tasks.map((task) => task.id));
+
+    localColumns.value = localColumns.value.map((column) => {
+        if (column.id === columnId) {
+            return {
+                ...column,
+                tasks: tasks.map((task, index) => ({
+                    ...task,
+                    column_id: columnId,
+                    position: index + 1,
+                })),
+            };
+        }
+
+        return {
+            ...column,
+            tasks: column.tasks.filter((task) => !taskIds.has(task.id)),
+        };
+    });
+
+    emit('taskListChange', columnId, tasks, persist);
 }
 
 // Modal State
-const isTaskModalOpen = ref(false)
-const selectedTask = ref<any>(null)
-const selectedColumnId = ref<number | undefined>(undefined)
+const isTaskModalOpen = ref(false);
+const selectedTask = ref<any>(null);
+const selectedColumnId = ref<number | undefined>(undefined);
 
 function openEditModal(task: any) {
-    selectedTask.value = task
-    selectedColumnId.value = task.column_id
-    isTaskModalOpen.value = true
+    selectedTask.value = task;
+    selectedColumnId.value = task.column_id;
+    isTaskModalOpen.value = true;
 }
 
 function openAddModal(columnId: number) {
-    selectedTask.value = null
-    selectedColumnId.value = columnId
-    isTaskModalOpen.value = true
+    selectedTask.value = null;
+    selectedColumnId.value = columnId;
+    isTaskModalOpen.value = true;
 }
 
 // Add Status State
-const isAddingStatus = ref(false)
+const isAddingStatus = ref(false);
 const statusForm = useForm({
-    title: ''
-})
+    title: '',
+});
 
 function submitNewStatus() {
     statusForm.post(storeColumn.url(props.projectId), {
         onSuccess: () => {
-            isAddingStatus.value = false
-            statusForm.reset()
-        }
-    })
+            isAddingStatus.value = false;
+            statusForm.reset();
+        },
+    });
 }
 </script>
 
 <template>
-    <div class="max-w-6xl mx-auto pb-12">
-        
+    <div class="mx-auto max-w-6xl pb-12">
         <!-- Global Headers -->
-        <div class="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-700/50 mb-4 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
-            <div @click="toggleSort('title')" class="col-span-6 cursor-pointer hover:text-white transition-colors flex items-center group">
+        <div
+            class="sticky top-0 z-10 mb-4 grid grid-cols-12 gap-4 border-b border-slate-700/50 bg-slate-900/90 px-4 py-3 text-xs font-semibold tracking-wider text-slate-400 uppercase backdrop-blur"
+        >
+            <div
+                @click="toggleSort('title')"
+                class="group col-span-6 flex cursor-pointer items-center transition-colors hover:text-white"
+            >
                 <span class="ml-7">Task Name</span>
-                <svg v-if="sortField === 'title'" :class="{'rotate-180': sortDirection === 'desc'}" class="h-3 w-3 ml-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                <svg
+                    v-if="sortField === 'title'"
+                    :class="{ 'rotate-180': sortDirection === 'desc' }"
+                    class="ml-1 h-3 w-3 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 15l7-7 7 7"
+                    />
+                </svg>
             </div>
-            <div @click="toggleSort('priority')" class="col-span-3 cursor-pointer hover:text-white transition-colors flex items-center">
+            <div
+                @click="toggleSort('priority')"
+                class="col-span-3 flex cursor-pointer items-center transition-colors hover:text-white"
+            >
                 <span>Priority</span>
-                <svg v-if="sortField === 'priority'" :class="{'rotate-180': sortDirection === 'desc'}" class="h-3 w-3 ml-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                <svg
+                    v-if="sortField === 'priority'"
+                    :class="{ 'rotate-180': sortDirection === 'desc' }"
+                    class="ml-1 h-3 w-3 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 15l7-7 7 7"
+                    />
+                </svg>
             </div>
-            <div @click="toggleSort('due_date')" class="col-span-3 cursor-pointer hover:text-white transition-colors flex items-center">
+            <div
+                @click="toggleSort('due_date')"
+                class="col-span-3 flex cursor-pointer items-center transition-colors hover:text-white"
+            >
                 <span>Due Date</span>
-                <svg v-if="sortField === 'due_date'" :class="{'rotate-180': sortDirection === 'desc'}" class="h-3 w-3 ml-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                <svg
+                    v-if="sortField === 'due_date'"
+                    :class="{ 'rotate-180': sortDirection === 'desc' }"
+                    class="ml-1 h-3 w-3 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 15l7-7 7 7"
+                    />
+                </svg>
             </div>
         </div>
 
@@ -123,44 +228,68 @@ function submitNewStatus() {
                 :sort-direction="sortDirection"
                 @edit-task="openEditModal"
                 @add-task="openAddModal"
+                @task-list-change="handleTaskListChange"
             />
         </VueDraggable>
 
-        <div v-if="localColumns.length === 0" class="text-center py-12 text-slate-500">
+        <div
+            v-if="localColumns.length === 0"
+            class="py-12 text-center text-slate-500"
+        >
             No statuses found. Add one below to get started.
         </div>
 
         <!-- Add Status -->
         <div class="mt-4">
-            <div v-if="!isAddingStatus" 
-                 @click="isAddingStatus = true"
-                 class="flex items-center px-4 py-3 rounded-lg border border-dashed border-slate-700 hover:border-slate-500 text-slate-500 hover:text-slate-300 cursor-pointer transition-colors bg-slate-800/20 hover:bg-slate-800/40">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            <div
+                v-if="!isAddingStatus"
+                @click="isAddingStatus = true"
+                class="flex cursor-pointer items-center rounded-lg border border-dashed border-slate-700 bg-slate-800/20 px-4 py-3 text-slate-500 transition-colors hover:border-slate-500 hover:bg-slate-800/40 hover:text-slate-300"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="mr-2 h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                >
+                    <path
+                        fill-rule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clip-rule="evenodd"
+                    />
                 </svg>
                 <span class="font-medium">Add Status</span>
             </div>
-            
-            <div v-else class="bg-slate-800 p-4 rounded-lg border border-slate-700 shadow-sm">
-                <form @submit.prevent="submitNewStatus" class="flex items-center space-x-3">
-                    <input 
+
+            <div
+                v-else
+                class="rounded-lg border border-slate-700 bg-slate-800 p-4 shadow-sm"
+            >
+                <form
+                    @submit.prevent="submitNewStatus"
+                    class="flex items-center space-x-3"
+                >
+                    <input
                         v-model="statusForm.title"
                         type="text"
                         placeholder="Status name (e.g. In Review, Blocked)..."
-                        class="flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                        class="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white focus:border-purple-500 focus:ring-purple-500"
                         autofocus
-                    >
-                    <button 
+                    />
+                    <button
                         type="submit"
                         :disabled="statusForm.processing || !statusForm.title"
-                        class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-md text-sm font-medium transition disabled:opacity-50"
+                        class="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
                     >
                         Save
                     </button>
-                    <button 
+                    <button
                         type="button"
-                        @click="isAddingStatus = false; statusForm.reset()"
-                        class="text-slate-400 hover:text-slate-300 px-2 py-2 text-sm font-medium"
+                        @click="
+                            isAddingStatus = false;
+                            statusForm.reset();
+                        "
+                        class="px-2 py-2 text-sm font-medium text-slate-400 hover:text-slate-300"
                     >
                         Cancel
                     </button>
