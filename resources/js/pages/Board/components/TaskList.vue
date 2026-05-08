@@ -40,12 +40,23 @@ const emit = defineEmits<{
     ): void;
 }>();
 
-const localColumns = ref([...props.columns]);
+function cloneColumns(columns: Array<Column>) {
+    return columns.map((column) => ({
+        ...column,
+        tasks: [...(column.tasks ?? [])],
+    }));
+}
+
+function columnTaskKey(column: Column) {
+    return `${column.id}:${column.tasks.map((task) => task.id).join(',')}`;
+}
+
+const localColumns = ref(cloneColumns(props.columns));
 
 watch(
     () => props.columns,
     (newCols) => {
-        localColumns.value = [...newCols];
+        localColumns.value = cloneColumns(newCols);
     },
     { deep: true },
 );
@@ -221,7 +232,7 @@ function submitNewStatus() {
         >
             <TaskListGroup
                 v-for="column in localColumns"
-                :key="column.id"
+                :key="columnTaskKey(column)"
                 :column="column"
                 :project-id="projectId"
                 :sort-field="sortField"

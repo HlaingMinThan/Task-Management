@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useRemember } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
 import {
     store,
@@ -37,18 +38,34 @@ const props = defineProps<{
     };
 }>();
 
-const columns = ref([...props.project.columns]);
+function cloneColumns(columns: Array<Column>) {
+    return columns.map((column) => ({
+        ...column,
+        tasks: [...(column.tasks ?? [])],
+    }));
+}
+
+const columns = ref(cloneColumns(props.project.columns));
 
 // Sync columns if project changes (e.g. after Inertia reload)
 watch(
     () => props.project.columns,
     (newColumns) => {
-        columns.value = [...newColumns];
+        columns.value = cloneColumns(newColumns);
     },
     { deep: true },
 );
 
-const viewMode = ref<'board' | 'list'>('board');
+const rememberedViewMode = useRemember(
+    { mode: 'board' as 'board' | 'list' },
+    'project-view-mode',
+) as Ref<{ mode: 'board' | 'list' }>;
+const viewMode = computed({
+    get: () => rememberedViewMode.value.mode,
+    set: (mode: 'board' | 'list') => {
+        rememberedViewMode.value.mode = mode;
+    },
+});
 
 const isAddingColumn = ref(false);
 const form = useForm({
