@@ -40,8 +40,8 @@ const isOverdue = computed(() => {
     return new Date(props.task.due_date) < new Date(new Date().setHours(0, 0, 0, 0))
 })
 
-const firstAssignee = computed(() => {
-    return (props.task.assignees && props.task.assignees.length) ? (props.task.assignees[0].user ?? null) : null
+const assigneesList = computed(() => {
+    return (props.task.assignees ?? []).filter(a => a && a.user).map(a => a.user)
 })
 </script>
 
@@ -51,20 +51,23 @@ const firstAssignee = computed(() => {
             <span :class="['text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border', priorityClass]">
                 {{ task.priority }}
             </span>
+
+            <div v-if="assigneesList.length" class="flex items-center -space-x-1">
+                <template v-for="(user, index) in assigneesList.slice(0, 3)" :key="user.id ?? index">
+                    <div class="h-6 w-6 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white border-2 border-slate-700" :title="user.name">
+                        {{ user.name ? user.name.charAt(0) : '' }}
+                    </div>
+                </template>
+
+                <div v-if="assigneesList.length > 3" class="h-6 w-6 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white border-2 border-slate-700 text-xs">
+                    +{{ assigneesList.length - 3 }}
+                </div>
+            </div>
         </div>
         
         <h4 class="text-sm font-medium text-white mb-2 leading-tight">
             {{ task.title }}
         </h4>
-
-        <div v-if="firstAssignee" class="flex items-center text-xs text-slate-400 mb-2">
-            <div class="h-5 w-5 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white mr-2">
-                {{ firstAssignee.name ? firstAssignee.name.charAt(0) : '' }}
-            </div>
-            <div class="truncate">
-                {{ firstAssignee.name }}
-            </div>
-        </div>
         
         <div v-if="formattedDate" class="flex items-center text-[11px]" :class="isOverdue ? 'text-red-400' : 'text-slate-400'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
