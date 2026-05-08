@@ -9,6 +9,7 @@ const props = defineProps<{
         priority: 'low' | 'medium' | 'high'
         status: string
         due_date?: string
+        completed_at?: string
     }
 }>()
 
@@ -48,8 +49,33 @@ const isDueToday = computed(() => {
 })
 
 const dateText = computed(() => {
+    if (props.task.status === 'done' && props.task.completed_at) {
+        const completed = new Date(props.task.completed_at)
+        const now = new Date()
+        
+        // Strip time for day comparison
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const compDate = new Date(completed.getFullYear(), completed.getMonth(), completed.getDate())
+        
+        const diffTime = today.getTime() - compDate.getTime()
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        
+        const exactDate = new Intl.DateTimeFormat('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(completed)
+        
+        if (diffDays === 0) {
+            return `Today (${exactDate})`
+        } else if (diffDays === 1) {
+            return `1 day ago (${exactDate})`
+        } else {
+            return `${diffDays} days ago (${exactDate})`
+        }
+    }
+
     if (!props.task.due_date) return null
-    if (props.task.status === 'done') return formattedDate.value
     
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -93,7 +119,8 @@ const dateText = computed(() => {
 <template>
     <div :class="[
         'bg-slate-700/50 hover:bg-slate-700 p-3 rounded-lg shadow-sm transition-all cursor-pointer group mb-2',
-        isOverdue ? 'border border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.15)]' : 'border border-slate-600'
+        isOverdue ? 'border border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.15)]' : 
+        task.status === 'done' ? 'border border-slate-600 opacity-90' : 'border border-slate-600'
     ]">
         <div class="flex justify-between items-start mb-2">
             <span :class="['text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border', priorityClass]">
@@ -105,7 +132,13 @@ const dateText = computed(() => {
             {{ task.title }}
         </h4>
         
-        <div v-if="isOverdue" class="flex items-center text-[11px] text-red-400 font-medium bg-red-500/10 px-2 py-1.5 rounded border border-red-500/20 mt-2">
+        <div v-if="task.status === 'done' && task.completed_at" class="flex items-center text-[11px] text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1.5 rounded border border-emerald-500/20 mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span class="truncate">{{ dateText }}</span>
+        </div>
+        <div v-else-if="isOverdue" class="flex items-center text-[11px] text-red-400 font-medium bg-red-500/10 px-2 py-1.5 rounded border border-red-500/20 mt-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
             </svg>
