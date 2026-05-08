@@ -8,6 +8,7 @@ use App\Models\ProjectInvite;
 use App\Models\ProjectMember;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -53,11 +54,8 @@ class ProjectMemberController extends Controller
 
         // Check if email is already a member
         $existingMember = ProjectMember::where('project_id', $project->id)
-            ->whereHas('user', function ($query) use ($validated) {
-                $query->where('email', $validated['email']);
-            })
-            ->where('status', 'active')
-            ->exists();
+            ->whereHas('user', fn($q) => $q->where('email', $validated['email']))
+            ->first();
 
         if ($existingMember) {
             return back()->withErrors([
@@ -68,9 +66,7 @@ class ProjectMemberController extends Controller
         // Check if there's a pending invite
         $pendingInvite = ProjectInvite::where('project_id', $project->id)
             ->where('email', $validated['email'])
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->exists();
+            ->first();
 
         if ($pendingInvite) {
             return back()->withErrors([
@@ -85,7 +81,7 @@ class ProjectMemberController extends Controller
                 'email' => $validated['email'],
                 'token' => Str::random(32),
                 'role' => $validated['role'],
-                'invited_by' => auth()->id(),
+                'invited_by' => Auth::id(),
                 'expires_at' => now()->addHours(24),
             ]);
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
@@ -111,7 +107,7 @@ class ProjectMemberController extends Controller
                 'token' => Str::random(32),
                 'role' => $validated['role'],
                 'status' => 'pending',
-                'invited_by' => auth()->id(),
+                'invited_by' => Auth::id(),
                 'expires_at' => now()->addHours(24),
             ]);
 
@@ -130,7 +126,7 @@ class ProjectMemberController extends Controller
     public function update(Request $request, Project $project, ProjectMember $member)
     {
         // Only project owner can update roles
-        if ($project->user_id !== auth()->id()) {
+        if ($project->user_id !== Auth::id()) {
             $this->authorize('update', $project);
         }
 
@@ -153,7 +149,7 @@ class ProjectMemberController extends Controller
     public function destroy(Project $project, ProjectMember $member)
     {
         // Only project owner can remove members
-        if ($project->user_id !== auth()->id()) {
+        if ($project->user_id !== Auth::id()) {
             $this->authorize('delete', $project);
         }
 
@@ -177,7 +173,7 @@ class ProjectMemberController extends Controller
     public function cancelInvite(Project $project, ProjectInvite $invite)
     {
         // Only project owner can cancel invites
-        if ($project->user_id !== auth()->id()) {
+        if ($project->user_id !== Auth::id()) {
             $this->authorize('delete', $project);
         }
 

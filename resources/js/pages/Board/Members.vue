@@ -10,10 +10,17 @@ const props = defineProps<{
     pendingInvites: Array<any>;
 }>();
 
-const form = useForm({ email: '', role: 'member' });
+const form = useForm({ email: '', role: '' });
 const processing = ref(false);
 const page = usePage();
 const successMessage = ref<string | null>(null);
+const memberRoles = ref<{ [key: number]: string }>({});
+const updatingMemberId = ref<number | null>(null);
+
+// Initialize memberRoles from members
+props.members.forEach((m) => {
+    memberRoles.value[m.id] = m.role;
+});
 
 function submitInvite() {
     processing.value = true;
@@ -33,10 +40,30 @@ function submitInvite() {
     });
 }
 
+function updateMemberRole(memberId: number) {
+    updatingMemberId.value = memberId;
+    const roleForm = useForm({ role: memberRoles.value[memberId] });
+
+    roleForm.patch(`/projects/${props.project.id}/members/${memberId}`, {
+        onSuccess: () => {
+            successMessage.value = 'Member role updated';
+            setTimeout(() => {
+                successMessage.value = null;
+            }, 2000);
+        },
+        onError: () => {
+            updatingMemberId.value = null;
+        },
+        onFinish: () => {
+            updatingMemberId.value = null;
+        },
+    });
+}
+
 function removeMember(memberId: number) {
     if (!confirm('Remove this member from project?')) {
-return;
-}
+        return;
+    }
 
     router.delete(`/projects/${props.project.id}/members/${memberId}`, {
         onSuccess: () => router.reload(),
@@ -45,8 +72,8 @@ return;
 
 function cancelInvite(inviteId: number) {
     if (!confirm('Cancel this pending invitation?')) {
-return;
-}
+        return;
+    }
 
     router.delete(`/projects/${props.project.id}/invites/${inviteId}`, {
         onSuccess: () => router.reload(),
@@ -149,20 +176,28 @@ return;
                         />
                         <select
                             v-model="form.role"
+                            required
                             class="rounded border border-slate-700 bg-slate-900 p-2 text-white"
                         >
+                            <option value="" disabled>Choose a role</option>
                             <option value="owner">Owner</option>
                             <option value="editor">Editor</option>
                             <option value="viewer">Viewer</option>
                         </select>
                         <button
                             @click.prevent="submitInvite"
-                            :disabled="form.processing || !form.email"
+                            :disabled="
+                                form.processing || !form.email || !form.role
+                            "
                             class="rounded bg-purple-600 px-3 py-2 text-white"
                         >
                             Send
                         </button>
                     </div>
+                    <p class="mt-2 text-sm text-slate-400">
+                        Choose a role before sending the invite.
+                    </p>
+                    <InputError :message="form.errors.role" />
                     <InputError :message="form.errors.email" />
                     <p class="mt-2 text-sm text-slate-400">
                         Invited users receive an email with a link to accept the
@@ -190,9 +225,26 @@ return;
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <div class="text-slate-300">
-                                        {{ m.role }}
-                                    </div>
+                                    <select
+                                        v-model="memberRoles[m.id]"
+                                        class="rounded border border-slate-700 bg-slate-900 p-2 text-sm text-white"
+                                    >
+                                        <option value="owner">Owner</option>
+                                        <option value="editor">Editor</option>
+                                        <option value="viewer">Viewer</option>
+                                    </select>
+                                    <button
+                                        v-if="memberRoles[m.id] !== m.role"
+                                        @click="updateMemberRole(m.id)"
+                                        :disabled="updatingMemberId === m.id"
+                                        class="rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-500 disabled:opacity-50"
+                                    >
+                                        {{
+                                            updatingMemberId === m.id
+                                                ? 'Updating...'
+                                                : 'Update'
+                                        }}
+                                    </button>
                                     <button
                                         @click="removeMember(m.id)"
                                         class="text-red-400 hover:underline"
