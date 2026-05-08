@@ -60,10 +60,24 @@ const rememberedViewMode = useRemember(
     { mode: 'board' as 'board' | 'list' },
     'project-view-mode',
 ) as Ref<{ mode: 'board' | 'list' }>;
+const viewModeStorageKey = `taskflow.project.${props.project.id}.view-mode`;
+
+if (typeof window !== 'undefined') {
+    const storedViewMode = window.localStorage.getItem(viewModeStorageKey);
+
+    if (storedViewMode === 'board' || storedViewMode === 'list') {
+        rememberedViewMode.value.mode = storedViewMode;
+    }
+}
+
 const viewMode = computed({
     get: () => rememberedViewMode.value.mode,
     set: (mode: 'board' | 'list') => {
         rememberedViewMode.value.mode = mode;
+
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(viewModeStorageKey, mode);
+        }
     },
 });
 
