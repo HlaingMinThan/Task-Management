@@ -15,14 +15,33 @@ class InviteController extends Controller
      */
     public function show(string $token)
     {
-        $invite = ProjectInvite::where('token', $token)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
+        $invite = ProjectInvite::query()
+            ->where('token', '=', $token)
             ->with('project', 'invitedBy')
             ->firstOrFail();
 
+        $canAccept = $invite->status === 'pending'
+            && $invite->expires_at
+            && $invite->expires_at->isFuture();
+
+        $statusMessage = null;
+
+        if (! $canAccept) {
+            if ($invite->status === 'pending' && $invite->expires_at && $invite->expires_at->isPast()) {
+                $statusMessage = 'Invitation has expired. Please ask the project owner to resend it.';
+            } elseif ($invite->status === 'accepted') {
+                $statusMessage = 'This invitation has already been accepted.';
+            } elseif ($invite->status === 'cancelled') {
+                $statusMessage = 'This invitation was cancelled by the project owner.';
+            } else {
+                $statusMessage = 'This invitation is no longer available.';
+            }
+        }
+
         // Check if user email already exists
-        $emailExists = User::where('email', $invite->email)->exists();
+        $emailExists = User::query()
+            ->where('email', '=', $invite->email)
+            ->exists();
 
         return inertia('AcceptInvite', [
             'invite' => $invite->only('email', 'role', 'id'),
@@ -30,6 +49,8 @@ class InviteController extends Controller
             'inviterName' => $invite->invitedBy->name,
             'token' => $token,
             'userExists' => $emailExists,
+            'canAccept' => $canAccept,
+            'statusMessage' => $statusMessage,
         ]);
     }
 
@@ -38,14 +59,23 @@ class InviteController extends Controller
      */
     public function accept(Request $request, string $token)
     {
-        $invite = ProjectInvite::where('token', $token)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
+        $invite = ProjectInvite::query()
+            ->where('token', '=', $token)
             ->with('project')
             ->firstOrFail();
 
+        $canAccept = $invite->status === 'pending'
+            && $invite->expires_at
+            && $invite->expires_at->isFuture();
+
+        if (! $canAccept) {
+            return redirect()->route('invites.show', ['token' => $token]);
+        }
+
         // Find or create user
-        $user = User::where('email', $invite->email)->first();
+        $user = User::query()
+            ->where('email', '=', $invite->email)
+            ->first();
 
         if (! $user) {
             // Clear any existing session so the guest register route won't bounce to dashboard.
@@ -61,12 +91,13 @@ class InviteController extends Controller
         }
 
         // User exists, authorize them
-        auth()->login($user);
+        Auth::login($user);
 
         // Check if already a member
-        $existingMember = ProjectMember::where('project_id', $invite->project_id)
-            ->where('user_id', $user->id)
-            ->where('status', 'active')
+        $existingMember = ProjectMember::query()
+            ->where('project_id', '=', $invite->project_id)
+            ->where('user_id', '=', $user->id)
+            ->where('status', '=', 'active')
             ->exists();
 
         if (! $existingMember) {

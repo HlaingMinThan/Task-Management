@@ -53,8 +53,9 @@ class ProjectMemberController extends Controller
         ]);
 
         // Check if email is already a member
-        $existingMember = ProjectMember::where('project_id', $project->id)
-            ->whereHas('user', fn($q) => $q->where('email', $validated['email']))
+        $existingMember = ProjectMember::query()
+            ->where('project_id', '=', $project->id)
+            ->whereHas('user', fn ($q) => $q->where('email', '=', $validated['email']))
             ->first();
 
         if ($existingMember) {
@@ -64,8 +65,11 @@ class ProjectMemberController extends Controller
         }
 
         // Check if there's a pending invite
-        $pendingInvite = ProjectInvite::where('project_id', $project->id)
-            ->where('email', $validated['email'])
+        $pendingInvite = ProjectInvite::query()
+            ->where('project_id', '=', $project->id)
+            ->where('email', '=', $validated['email'])
+            ->where('status', '=', 'pending')
+            ->where('expires_at', '>', now())
             ->first();
 
         if ($pendingInvite) {
@@ -86,8 +90,9 @@ class ProjectMemberController extends Controller
             ]);
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
             // Find existing invite record
-            $existing = ProjectInvite::where('project_id', $project->id)
-                ->where('email', $validated['email'])
+            $existing = ProjectInvite::query()
+                ->where('project_id', '=', $project->id)
+                ->where('email', '=', $validated['email'])
                 ->first();
 
             if (! $existing) {
@@ -162,7 +167,7 @@ class ProjectMemberController extends Controller
             return back()->withErrors(['error' => 'Cannot remove the project owner.']);
         }
 
-        $member->delete();
+        $member->delete([]);
 
         return back()->with('success', 'Member removed from project.');
     }

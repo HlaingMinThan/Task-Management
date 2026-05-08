@@ -8,6 +8,8 @@ const props = defineProps<{
     inviterName: string;
     token: string;
     userExists: boolean;
+    canAccept: boolean;
+    statusMessage?: string | null;
 }>();
 
 const form = useForm({});
@@ -34,7 +36,14 @@ function accept() {
                 <strong class="text-white">{{ invite.role }}</strong>
             </p>
 
-            <div class="mt-6">
+            <div
+                v-if="statusMessage"
+                class="mt-4 rounded border border-amber-600 bg-amber-900/30 p-3 text-amber-200"
+            >
+                {{ statusMessage }}
+            </div>
+
+            <div v-if="canAccept" class="mt-6">
                 <button
                     @click="accept"
                     class="rounded bg-green-600 px-4 py-2 text-white"
