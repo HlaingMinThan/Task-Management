@@ -17,7 +17,9 @@ const successMessage = ref<string | null>(null);
 const memberRoles = ref<{ [key: number]: string }>({});
 const updatingMemberId = ref<number | null>(null);
 const removeMemberError = ref<string | null>(null);
+const removeMemberSuccess = ref<string | null>(null);
 const cancelInviteError = ref<string | null>(null);
+const cancelInviteSuccess = ref<string | null>(null);
 
 // Initialize memberRoles from members
 props.members.forEach((m) => {
@@ -88,6 +90,13 @@ function removeMember(memberId: number) {
     }
 
     router.delete(`/projects/${props.project.id}/members/${memberId}`, {
+        onSuccess: () => {
+            removeMemberSuccess.value = 'Member removed from project.';
+            setTimeout(() => {
+                removeMemberSuccess.value = null;
+                router.reload();
+            }, 2000);
+        },
         onError: () => {
             removeMemberError.value =
                 'Only the project owner can remove members.';
@@ -104,6 +113,13 @@ function cancelInvite(inviteId: number) {
     }
 
     router.delete(`/projects/${props.project.id}/invites/${inviteId}`, {
+        onSuccess: () => {
+            cancelInviteSuccess.value = 'Invitation cancelled.';
+            setTimeout(() => {
+                cancelInviteSuccess.value = null;
+                router.reload();
+            }, 2000);
+        },
         onError: () => {
             cancelInviteError.value =
                 'Only the project owner can cancel invitations.';
@@ -249,6 +265,24 @@ function cancelInvite(inviteId: number) {
                         Active Members
                     </h2>
                     <div
+                        v-if="removeMemberSuccess"
+                        class="mb-3 flex items-center rounded border border-emerald-700 bg-emerald-900/20 p-3 text-sm text-emerald-300"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-2 h-5 w-5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                        {{ removeMemberSuccess }}
+                    </div>
+                    <div
                         v-if="removeMemberError"
                         class="mb-3 flex items-center rounded border border-red-700 bg-red-900/20 p-3 text-sm text-red-300"
                     >
@@ -318,6 +352,24 @@ function cancelInvite(inviteId: number) {
                     <h2 class="mb-2 text-lg font-medium text-white">
                         Pending Invites
                     </h2>
+                    <div
+                        v-if="cancelInviteSuccess"
+                        class="mb-3 flex items-center rounded border border-emerald-700 bg-emerald-900/20 p-3 text-sm text-emerald-300"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-2 h-5 w-5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                        {{ cancelInviteSuccess }}
+                    </div>
                     <div
                         v-if="cancelInviteError"
                         class="mb-3 flex items-center rounded border border-red-700 bg-red-900/20 p-3 text-sm text-red-300"
