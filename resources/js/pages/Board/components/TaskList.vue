@@ -61,12 +61,17 @@ watch(
     { deep: true },
 );
 
-const sortField = ref<'title' | 'priority' | 'due_date'>('title');
+const sortField = ref<'none' | 'title' | 'priority' | 'due_date'>('none');
 const sortDirection = ref<'asc' | 'desc'>('asc');
 
-function toggleSort(field: typeof sortField.value) {
+function toggleSort(field: 'title' | 'priority' | 'due_date') {
     if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+        if (sortDirection.value === 'asc') {
+            sortDirection.value = 'desc';
+        } else {
+            sortField.value = 'none';
+            sortDirection.value = 'asc';
+        }
     } else {
         sortField.value = field;
         sortDirection.value = 'asc';

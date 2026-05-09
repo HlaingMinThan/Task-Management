@@ -21,7 +21,7 @@ const props = defineProps<{
         position: number;
         tasks: Array<Task>;
     };
-    sortField: 'title' | 'priority' | 'due_date';
+    sortField: 'none' | 'title' | 'priority' | 'due_date';
     sortDirection: 'asc' | 'desc';
 }>();
 
@@ -37,9 +37,13 @@ const emit = defineEmits<{
 }>();
 
 function sortedTasks(tasks: Array<Task>) {
+    if (props.sortField === 'none') {
+        return [...tasks];
+    }
+
     return [...tasks].sort((a, b) => {
-        let valA: string | number | undefined = a[props.sortField];
-        let valB: string | number | undefined = b[props.sortField];
+        let valA: string | number | undefined = a[props.sortField as 'title' | 'priority' | 'due_date'];
+        let valB: string | number | undefined = b[props.sortField as 'title' | 'priority' | 'due_date'];
 
         if (props.sortField === 'priority') {
             const weight = { high: 3, medium: 2, low: 1 };
@@ -73,7 +77,7 @@ watch(
 );
 
 watch([() => props.sortField, () => props.sortDirection], () => {
-    localTasks.value = sortedTasks(localTasks.value);
+    localTasks.value = sortedTasks(props.column.tasks ?? []);
 });
 
 function handleTaskListChange(persist = true) {
@@ -147,11 +151,13 @@ const isCollapsed = ref(false);
                 handle=".task-handle"
                 :animation="150"
                 class="min-h-[10px]"
+                :disabled="sortField !== 'none'"
             >
                 <TaskListItem
                     v-for="task in localTasks"
                     :key="task.id"
                     :task="task"
+                    :is-sort-active="sortField !== 'none'"
                     @click="emit('editTask', task)"
                 />
             </VueDraggable>
