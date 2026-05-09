@@ -6,6 +6,7 @@ import ProjectCard from '@/Components/ProjectCard.vue'
 import ProjectFormModal from '@/Components/ProjectFormModal.vue'
 import DeleteModal from '@/Components/DeleteModal.vue'
 import { destroy } from '@/actions/App/Http/Controllers/ProjectController'
+import { edit as editProfile } from '@/actions/App/Http/Controllers/ProfileController'
 import { useDebounceFn } from '@vueuse/core'
 
 const props = defineProps<{
@@ -103,6 +104,9 @@ function closeDeleteModal() {
                 </svg>
                 New Project
             </button>
+            <Link :href="editProfile.url()" class="text-sm text-slate-400 hover:text-white transition whitespace-nowrap ml-4">
+              Profile
+            </Link>
             
             <Link :href="logout.url()" method="post" as="button" class="text-sm text-slate-400 hover:text-white transition whitespace-nowrap ml-4">
               Log Out
