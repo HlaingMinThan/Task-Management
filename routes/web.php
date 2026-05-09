@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskAssigneeController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,12 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/projects/{project}/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/projects/{project}/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('/projects/{project}/tasks/reorder', [TaskController::class, 'reorder'])->name('tasks.reorder');
+
+    // Assignee management
+    Route::get('/projects/{project}/users', [TaskAssigneeController::class, 'users'])->name('projects.users');
+    Route::post('/projects/{project}/tasks/{task}/assignees', [TaskAssigneeController::class, 'store'])->name('tasks.assignees.store');
+    Route::delete('/projects/{project}/tasks/{task}/assignees/{user}', [TaskAssigneeController::class, 'destroy'])->name('tasks.assignees.destroy');
+
 });
 
 require __DIR__.'/auth.php';

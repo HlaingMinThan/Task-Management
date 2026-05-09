@@ -6,6 +6,7 @@ import InputLabel from '@/components/InputLabel.vue'
 import TextInput from '@/components/TextInput.vue'
 import InputError from '@/components/InputError.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
+import AssignUsersModal from './AssignUsersModal.vue'
 
 const props = defineProps<{
     show: boolean
