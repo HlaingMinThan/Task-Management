@@ -7,11 +7,11 @@ const props = defineProps<{
     projectId: number
     taskId: number
     initialAssignees?: Array<{ id: number, name: string }>
-}>
+}>()
 
 const emit = defineEmits<{
     (e: 'close'): void
-}>
+}>()
 
 const search = ref('')
 const users = ref<Array<{ id: number, name: string, email?: string }>>([])
