@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createSSRApp, h, type DefineComponent } from 'vue';
+import { createSSRApp, h  } from 'vue';
+import type {DefineComponent} from 'vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

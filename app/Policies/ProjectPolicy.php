@@ -20,7 +20,13 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id;
+        // Owner can always view
+        if ($user->id === $project->user_id) {
+            return true;
+        }
+
+        // Check if user is a member of the project
+        return $user->isMemberOf($project);
     }
 
     /**

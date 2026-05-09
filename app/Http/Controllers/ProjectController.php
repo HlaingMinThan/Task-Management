@@ -15,8 +15,14 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $projects = $request->user()
-            ->projects()
+        $projects = Project::query()
+            ->where(function ($query) use ($request) {
+                $query->where('user_id', $request->user()->id)
+                    ->orWhereHas('members', function ($memberQuery) use ($request) {
+                        $memberQuery->where('user_id', $request->user()->id)
+                            ->where('status', 'active');
+                    });
+            })
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
