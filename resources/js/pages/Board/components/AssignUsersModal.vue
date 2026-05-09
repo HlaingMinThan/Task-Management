@@ -6,9 +6,10 @@ export default defineComponent({
     props: {
         show: { type: Boolean, required: true },
         projectId: { type: Number, required: true },
-        taskId: { type: Number, required: true },
+        taskId: { type: Number, required: false },
         initialAssignees: { type: Array, default: () => [] }
     },
+
     emits: ['close'],
     setup(props, { emit }) {
         const search = ref('')
