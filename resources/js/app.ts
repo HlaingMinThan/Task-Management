@@ -14,10 +14,15 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const createAppFn = typeof window !== 'undefined' ? createApp : createSSRApp;
 
-        createAppFn({ render: () => h(App, props) })
-            .use(plugin)
-            .mount(el);
+        const appInstance = createAppFn({ render: () => h(App, props) }).use(plugin);
+
+        if (typeof window !== 'undefined') {
+            appInstance.mount(el);
+        }
+
+        return appInstance;
     },
+
 
     progress: {
         color: '#4B5563',
