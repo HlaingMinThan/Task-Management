@@ -53,7 +53,7 @@ export default defineComponent({
         async function loadUsers() {
             loading.value = true
             try {
-                const url = `/projects/${props.projectId}/users?query=${encodeURIComponent(String(search.value))}&page=${page.value}`
+                const url = `/projects/${props.projectId}/users?query=${encodeURIComponent(String(search.value))}&page=${page.value}&task_id=${props.taskId ?? ''}`
                 const res = await fetch(url, { headers: { 'Accept': 'application/json' } })
                 const data = await res.json()
                 users.value = data.data
@@ -63,6 +63,9 @@ export default defineComponent({
         }
 
         function toggleSelect(user: any) {
+            // prevent selecting users who are assigned to other tasks
+            if (user.assigned_elsewhere) return
+
             if (selected.value[user.id]) {
                 delete selected.value[user.id]
             } else {
@@ -166,8 +169,8 @@ export default defineComponent({
                                             </div>
                                         </div>
                                         <div>
-                                            <button @click.prevent="toggleSelect(user)" class="px-2 py-1 rounded border text-sm" :class="isSelected(user) ? 'bg-purple-600 text-white' : 'text-slate-300 border-slate-700'">
-                                                {{ isSelected(user) ? 'Selected' : 'Add' }}
+                                            <button @click.prevent="toggleSelect(user)" class="px-2 py-1 rounded border text-sm" :class="user.assigned_elsewhere ? 'bg-slate-600 text-slate-300 cursor-not-allowed' : (isSelected(user) ? 'bg-purple-600 text-white' : 'text-slate-300 border-slate-700')" :disabled="user.assigned_elsewhere">
+                                                {{ user.assigned_elsewhere ? 'Assigned' : (isSelected(user) ? 'Selected' : 'Add') }}
                                             </button>
                                         </div>
                                     </div>

@@ -26,11 +26,18 @@ class TaskAssigneeController extends Controller
             });
         }
 
-        $users = $query->orderBy('name')->paginate(20)->through(function ($user) {
+        $taskId = $request->query('task_id');
+
+        $users = $query->orderBy('name')->paginate(20)->through(function ($user) use ($taskId) {
+            $assignedElsewhere = \App\Models\TaskUser::where('user_id', $user->id)
+                ->when($taskId, fn($q) => $q->where('task_id', '!=', $taskId))
+                ->exists();
+
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'assigned_elsewhere' => $assignedElsewhere,
             ];
         });
 
@@ -55,7 +62,15 @@ class TaskAssigneeController extends Controller
         // Remove assignees that are not present in the submitted list (sync behavior)
         $task->assignees()->whereNotIn('user_id', $userIds)->delete();
 
+        $skipped = [];
         foreach ($userIds as $userId) {
+            // skip users already assigned to other tasks (unique constraint prevents multi-task assignment)
+            $existsElsewhere = TaskUser::where('user_id', $userId)->where('task_id', '!=', $task->id)->exists();
+            if ($existsElsewhere) {
+                $skipped[] = $userId;
+                continue;
+            }
+
             TaskUser::firstOrCreate([
                 'task_id' => $task->id,
                 'user_id' => $userId,
