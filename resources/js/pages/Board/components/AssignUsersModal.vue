@@ -1,92 +1,104 @@
-<script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+<script lang="ts">
+import { defineComponent, ref, watch, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 
-const props = defineProps<{
-    show: boolean
-    projectId: number
-    taskId: number
-    initialAssignees?: Array<{ id: number, name: string }>
-}>()
+export default defineComponent({
+    props: {
+        show: { type: Boolean, required: true },
+        projectId: { type: Number, required: true },
+        taskId: { type: Number, required: true },
+        initialAssignees: { type: Array, default: () => [] }
+    },
+    emits: ['close'],
+    setup(props, { emit }) {
+        const search = ref('')
+        const users = ref<Array<{ id: number, name: string, email?: string }>>([])
+        const loading = ref(false)
+        const page = ref(1)
+        const perPage = 20
+        const selected = ref<Record<number, { id: number, name: string }>>({})
+        let debounceTimer: any = null
 
-const emit = defineEmits<{
-    (e: 'close'): void
-}>()
+        onMounted(() => {
+            if (props.initialAssignees) {
+                (props.initialAssignees as any).forEach((a: any) => { if (a) selected.value[a.id] = a })
+            }
+        })
 
-const search = ref('')
-const users = ref<Array<{ id: number, name: string, email?: string }>>([])
-const loading = ref(false)
-const page = ref(1)
-const perPage = 20
-const selected = ref<Record<number, { id: number, name: string }>>({})
-let debounceTimer: any = null
+        watch(() => props.show, (val) => {
+            if (val) {
+                loadUsers()
+            }
+        })
 
-onMounted(() => {
-    if (props.initialAssignees) {
-        props.initialAssignees.forEach(a => selected.value[a.id] = a)
+        watch(search, () => {
+            clearTimeout(debounceTimer)
+            debounceTimer = setTimeout(() => {
+                page.value = 1
+                loadUsers()
+            }, 300)
+        })
+
+        async function loadUsers() {
+            loading.value = true
+            try {
+                const url = `/projects/${props.projectId}/users?query=${encodeURIComponent(String(search.value))}&page=${page.value}`
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } })
+                const data = await res.json()
+                users.value = data.data
+            } finally {
+                loading.value = false
+            }
+        }
+
+        function toggleSelect(user: any) {
+            if (selected.value[user.id]) {
+                delete selected.value[user.id]
+            } else {
+                selected.value[user.id] = user
+            }
+        }
+
+        function isSelected(user: any) {
+            return !!selected.value[user.id]
+        }
+
+        async function confirm() {
+            const userIds = Object.keys(selected.value).map(k => Number(k))
+            if (!props.taskId || userIds.length === 0) {
+                emit('close')
+                return
+            }
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+
+            await fetch(`/projects/${props.projectId}/tasks/${props.taskId}/assignees`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token || ''
+                },
+                body: JSON.stringify({ user_ids: userIds })
+            })
+
+            // reload to reflect changes
+            router.reload()
+        }
+
+        return {
+            search,
+            users,
+            loading,
+            page,
+            perPage,
+            selected,
+            toggleSelect,
+            isSelected,
+            confirm
+        }
     }
 })
-
-watch(() => props.show, (val) => {
-    if (val) {
-        loadUsers()
-    }
-})
-
-watch(search, () => {
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-        page.value = 1
-        loadUsers()
-    }, 300)
-})
-
-async function loadUsers() {
-    loading.value = true
-    try {
-        const url = `/projects/${props.projectId}/users?query=${encodeURIComponent(search.value)}&page=${page.value}`
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } })
-        const data = await res.json()
-        users.value = data.data
-    } finally {
-        loading.value = false
-    }
-}
-
-function toggleSelect(user) {
-    if (selected.value[user.id]) {
-        delete selected.value[user.id]
-    } else {
-        selected.value[user.id] = user
-    }
-}
-
-function isSelected(user) {
-    return !!selected.value[user.id]
-}
-
-async function confirm() {
-    const userIds = Object.keys(selected.value).map(k => Number(k))
-    if (!props.taskId || userIds.length === 0) {
-        emit('close')
-        return
-    }
-
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-
-    await fetch(`/projects/${props.projectId}/tasks/${props.taskId}/assignees`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': token || ''
-        },
-        body: JSON.stringify({ user_ids: userIds })
-    })
-
-    // reload to reflect changes
-    router.reload()
-}
 </script>
 
 <template>
