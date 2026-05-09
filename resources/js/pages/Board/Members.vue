@@ -87,7 +87,15 @@ function removeMember(memberId: number) {
         return;
     }
 
-    router.delete(`/projects/${props.project.id}/members/${memberId}`);
+    router.delete(`/projects/${props.project.id}/members/${memberId}`, {
+        onError: () => {
+            removeMemberError.value =
+                'Only the project owner can remove members.';
+            setTimeout(() => {
+                removeMemberError.value = null;
+            }, 5000);
+        },
+    });
 }
 
 function cancelInvite(inviteId: number) {
@@ -95,7 +103,15 @@ function cancelInvite(inviteId: number) {
         return;
     }
 
-    router.delete(`/projects/${props.project.id}/invites/${inviteId}`);
+    router.delete(`/projects/${props.project.id}/invites/${inviteId}`, {
+        onError: () => {
+            cancelInviteError.value =
+                'Only the project owner can cancel invitations.';
+            setTimeout(() => {
+                cancelInviteError.value = null;
+            }, 5000);
+        },
+    });
 }
 </script>
 
