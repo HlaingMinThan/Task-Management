@@ -155,7 +155,7 @@ class ProjectMemberController extends Controller
     {
         // Only project owner can remove members
         if ($project->user_id !== Auth::id()) {
-            $this->authorize('delete', $project);
+            return back()->withErrors(['error' => 'Only the project owner can remove members.']);
         }
 
         if ($member->project_id !== $project->id) {
@@ -179,7 +179,7 @@ class ProjectMemberController extends Controller
     {
         // Only project owner can cancel invites
         if ($project->user_id !== Auth::id()) {
-            $this->authorize('delete', $project);
+            return back()->withErrors(['error' => 'Only the project owner can cancel invitations.']);
         }
 
         if ($invite->project_id !== $project->id) {

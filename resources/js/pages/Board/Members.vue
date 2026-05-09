@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, Link, usePage } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 
 const props = defineProps<{
@@ -16,11 +16,33 @@ const page = usePage();
 const successMessage = ref<string | null>(null);
 const memberRoles = ref<{ [key: number]: string }>({});
 const updatingMemberId = ref<number | null>(null);
+const removeMemberError = ref<string | null>(null);
+const cancelInviteError = ref<string | null>(null);
 
 // Initialize memberRoles from members
 props.members.forEach((m) => {
     memberRoles.value[m.id] = m.role;
 });
+
+// Watch for errors from backend
+watch(
+    () => page.props.errors,
+    (errors: any) => {
+        if (errors && errors.error) {
+            if (errors.error.includes('remove')) {
+                removeMemberError.value = errors.error;
+                setTimeout(() => {
+                    removeMemberError.value = null;
+                }, 5000);
+            } else if (errors.error.includes('cancel')) {
+                cancelInviteError.value = errors.error;
+                setTimeout(() => {
+                    cancelInviteError.value = null;
+                }, 5000);
+            }
+        }
+    },
+);
 
 function submitInvite() {
     processing.value = true;
@@ -65,9 +87,7 @@ function removeMember(memberId: number) {
         return;
     }
 
-    router.delete(`/projects/${props.project.id}/members/${memberId}`, {
-        onSuccess: () => router.reload(),
-    });
+    router.delete(`/projects/${props.project.id}/members/${memberId}`);
 }
 
 function cancelInvite(inviteId: number) {
@@ -75,9 +95,7 @@ function cancelInvite(inviteId: number) {
         return;
     }
 
-    router.delete(`/projects/${props.project.id}/invites/${inviteId}`, {
-        onSuccess: () => router.reload(),
-    });
+    router.delete(`/projects/${props.project.id}/invites/${inviteId}`);
 }
 </script>
 
@@ -209,6 +227,24 @@ function cancelInvite(inviteId: number) {
                     <h2 class="mb-2 text-lg font-medium text-white">
                         Active Members
                     </h2>
+                    <div
+                        v-if="removeMemberError"
+                        class="mb-3 flex items-center rounded border border-red-700 bg-red-900/20 p-3 text-sm text-red-300"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-2 h-5 w-5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                        {{ removeMemberError }}
+                    </div>
                     <div class="rounded bg-slate-800 p-4">
                         <ul>
                             <li
@@ -261,6 +297,24 @@ function cancelInvite(inviteId: number) {
                     <h2 class="mb-2 text-lg font-medium text-white">
                         Pending Invites
                     </h2>
+                    <div
+                        v-if="cancelInviteError"
+                        class="mb-3 flex items-center rounded border border-red-700 bg-red-900/20 p-3 text-sm text-red-300"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-2 h-5 w-5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                        {{ cancelInviteError }}
+                    </div>
                     <div class="rounded bg-slate-800 p-4">
                         <ul>
                             <li
