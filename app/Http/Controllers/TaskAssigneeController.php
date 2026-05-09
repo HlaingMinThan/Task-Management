@@ -52,6 +52,9 @@ class TaskAssigneeController extends Controller
 
         $userIds = $validated['user_ids'];
 
+        // Remove assignees that are not present in the submitted list (sync behavior)
+        $task->assignees()->whereNotIn('user_id', $userIds)->delete();
+
         foreach ($userIds as $userId) {
             TaskUser::firstOrCreate([
                 'task_id' => $task->id,

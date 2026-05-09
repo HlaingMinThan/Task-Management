@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue'
+import { defineComponent, ref, watch, onMounted, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 export default defineComponent({
