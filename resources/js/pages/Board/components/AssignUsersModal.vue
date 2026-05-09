@@ -26,9 +26,19 @@ export default defineComponent({
             }
         })
 
+        const submitting = ref(false)
+
         watch(() => props.show, (val) => {
             if (val) {
+                // populate selected from initialAssignees every time modal opens
+                selected.value = {}
+                if (props.initialAssignees && Array.isArray(props.initialAssignees)) {
+                    (props.initialAssignees as any).forEach((a: any) => { if (a) selected.value[a.id] = a })
+                }
                 loadUsers()
+            } else {
+                // clear selected when modal closes
+                selected.value = {}
             }
         })
 
@@ -66,25 +76,41 @@ export default defineComponent({
 
         async function confirm() {
             const userIds = Object.keys(selected.value).map(k => Number(k))
-            if (!props.taskId || userIds.length === 0) {
+            if (!props.taskId) {
+                // nothing to assign against
                 emit('close')
                 return
             }
 
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            submitting.value = true
 
-            await fetch(`/projects/${props.projectId}/tasks/${props.taskId}/assignees`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token || ''
-                },
-                body: JSON.stringify({ user_ids: userIds })
-            })
+            try {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
 
-            // reload to reflect changes
-            router.reload()
+                const res = await fetch(`/projects/${props.projectId}/tasks/${props.taskId}/assignees`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token || ''
+                    },
+                    body: JSON.stringify({ user_ids: userIds })
+                })
+
+                if (!res.ok) {
+                    // you could show an error here; for now just throw
+                    throw new Error('Failed to assign users')
+                }
+
+                // close modal and reload to reflect changes
+                emit('close')
+                router.reload()
+            } catch (e) {
+                // optionally handle error (console for now)
+                console.error(e)
+            } finally {
+                submitting.value = false
+            }
         }
 
         return {
@@ -96,7 +122,8 @@ export default defineComponent({
             selected,
             toggleSelect,
             isSelected,
-            confirm
+            confirm,
+            submitting
         }
     }
 })
@@ -105,7 +132,7 @@ export default defineComponent({
 <template>
     <Teleport to="body">
         <Transition name="modal-backdrop">
-            <div v-if="show" class="fixed inset-0 z-[80] bg-slate-900/80 backdrop-blur-sm transition-opacity" @click="emit('close')"></div>
+            <div v-if="show" class="fixed inset-0 z-[80] bg-slate-900/80 backdrop-blur-sm transition-opacity" @click="$emit('close')"></div>
         </Transition>
 
         <Transition name="modal-panel">
@@ -149,7 +176,7 @@ export default defineComponent({
 
                             <div class="mt-4 flex flex-wrap gap-2">
                                 <template v-for="(s, id) in selected" :key="id">
-                                    <div class="bg-slate-700 px-2 py-1 rounded text-xs flex items-center gap-2">
+                                    <div class="bg-slate-700 px-2 py-1 rounded text-xs flex items-center gap-2 text-white">
                                         <span>{{ s.name }}</span>
                                         <button @click.prevent="() => toggleSelect(s)" class="text-slate-400">×</button>
                                     </div>
@@ -157,8 +184,8 @@ export default defineComponent({
                             </div>
 
                             <div class="mt-4 flex justify-end gap-2">
-                                <button @click="emit('close')" class="px-3 py-2 rounded bg-slate-800 text-slate-300">Cancel</button>
-                                <button @click.prevent="confirm" class="px-3 py-2 rounded bg-purple-600 text-white">Assign</button>
+                                <button @click="$emit('close')" class="px-3 py-2 rounded bg-slate-800 text-slate-300" :disabled="submitting">Cancel</button>
+                                <button @click.prevent="confirm" class="px-3 py-2 rounded bg-purple-600 text-white" :disabled="submitting">{{ submitting ? 'Assigning...' : 'Assign' }}</button>
                             </div>
                         </div>
                     </div>
