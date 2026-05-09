@@ -207,9 +207,14 @@ function cancelInvite(inviteId: number) {
                             :disabled="
                                 form.processing || !form.email || !form.role
                             "
-                            class="rounded bg-purple-600 px-3 py-2 text-white"
+                            :aria-busy="form.processing"
+                            class="inline-flex items-center rounded bg-purple-600 px-3 py-2 text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            Send
+                            <span
+                                v-if="form.processing"
+                                class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                            ></span>
+                            {{ form.processing ? 'Sending...' : 'Send' }}
                         </button>
                     </div>
                     <p class="mt-2 text-sm text-slate-400">
