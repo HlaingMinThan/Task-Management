@@ -41,7 +41,7 @@ const isOverdue = computed(() => {
 })
 
 const assigneesList = computed(() => {
-    return (props.task.assignees ?? []).filter(a => a && a.user).map(a => a.user)
+    return (props.task.assignees ?? []).filter(a => a && a.user).map(a => a.user!)
 })
 </script>
 
