@@ -2,10 +2,11 @@
 import { ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { store, update, destroy } from '@/actions/App/Http/Controllers/TaskController'
-import InputLabel from '@/Components/InputLabel.vue'
-import TextInput from '@/Components/TextInput.vue'
-import InputError from '@/Components/InputError.vue'
-import DeleteModal from '@/Components/DeleteModal.vue'
+import InputLabel from '@/components/InputLabel.vue'
+import TextInput from '@/components/TextInput.vue'
+import InputError from '@/components/InputError.vue'
+import DeleteModal from '@/components/DeleteModal.vue'
+import AssignUsersModal from './AssignUsersModal.vue'
 
 const props = defineProps<{
     show: boolean
@@ -17,6 +18,7 @@ const props = defineProps<{
         description?: string
         priority: 'low' | 'medium' | 'high'
         due_date?: string
+        assignees?: Array<any>
     } | null
 }>()
 
@@ -62,10 +64,16 @@ function submit() {
 }
 
 const isDeleteModalOpen = ref(false)
+const isAssignModalOpen = ref(false)
 
 function handleDelete() {
     if (!props.task) return
     isDeleteModalOpen.value = true
+}
+
+function openAssignModal() {
+    if (!props.task) return
+    isAssignModalOpen.value = true
 }
 </script>
 
@@ -154,6 +162,15 @@ function handleDelete() {
                                 <button 
                                     v-if="task"
                                     type="button" 
+                                    @click="openAssignModal"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 shadow-sm ring-1 ring-inset ring-slate-600 hover:bg-slate-700 sm:mt-0 sm:w-auto transition mr-2"
+                                >
+                                    Assign Users
+                                </button>
+
+                                <button 
+                                    v-if="task"
+                                    type="button" 
                                     @click="handleDelete"
                                     class="mt-3 inline-flex w-full justify-center rounded-md bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-400 shadow-sm hover:bg-red-500/20 sm:mt-0 sm:w-auto transition mr-auto border border-red-500/20"
                                 >
@@ -182,6 +199,14 @@ function handleDelete() {
             :message="`Are you sure you want to delete '${task.title}'?`"
             @close="isDeleteModalOpen = false"
             :on-success="() => emit('close')"
+        />
+
+        <AssignUsersModal
+            :show="isAssignModalOpen"
+            :project-id="projectId"
+            :task-id="task?.id"
+            :initial-assignees="task?.assignees?.map(a => a.user ? { id: a.user.id, name: a.user.name } : null) ?? []"
+            @close="isAssignModalOpen = false"
         />
     </Teleport>
 </template>

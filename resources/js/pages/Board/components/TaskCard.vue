@@ -8,6 +8,13 @@ const props = defineProps<{
         description?: string
         priority: 'low' | 'medium' | 'high'
         due_date?: string
+        assignees?: Array<{
+            id: number
+            user?: {
+                id: number
+                name: string
+            }
+        }>
     }
 }>()
 
@@ -32,6 +39,10 @@ const isOverdue = computed(() => {
     if (!props.task.due_date) return false
     return new Date(props.task.due_date) < new Date(new Date().setHours(0, 0, 0, 0))
 })
+
+const assigneesList = computed(() => {
+    return (props.task.assignees ?? []).filter(a => a && a.user).map(a => a.user!)
+})
 </script>
 
 <template>
@@ -40,6 +51,18 @@ const isOverdue = computed(() => {
             <span :class="['text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border', priorityClass]">
                 {{ task.priority }}
             </span>
+
+            <div v-if="assigneesList.length" class="flex items-center -space-x-1">
+                <template v-for="(user, index) in assigneesList.slice(0, 3)" :key="user.id ?? index">
+                    <div class="h-6 w-6 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white border-2 border-slate-700" :title="user.name">
+                        {{ user.name ? user.name.charAt(0) : '' }}
+                    </div>
+                </template>
+
+                <div v-if="assigneesList.length > 3" class="h-6 w-6 rounded-full bg-slate-600 flex items-center justify-center text-[11px] font-medium text-white border-2 border-slate-700 text-xs">
+                    +{{ assigneesList.length - 3 }}
+                </div>
+            </div>
         </div>
         
         <h4 class="text-sm font-medium text-white mb-2 leading-tight">

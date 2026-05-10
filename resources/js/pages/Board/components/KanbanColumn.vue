@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import { update, destroy } from '@/actions/App/Http/Controllers/ColumnController'
 import { reorder as reorderTasks } from '@/actions/App/Http/Controllers/TaskController'
-import DeleteModal from '@/Components/DeleteModal.vue'
+import DeleteModal from '@/components/DeleteModal.vue'
 import TaskCard from './TaskCard.vue'
 import TaskFormModal from './TaskFormModal.vue'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -21,6 +21,7 @@ const props = defineProps<{
             priority: 'low' | 'medium' | 'high'
             due_date?: string
             position: number
+            assignees?: Array<any>
         }>
     }
 }>()

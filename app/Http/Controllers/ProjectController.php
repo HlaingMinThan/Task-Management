@@ -48,7 +48,9 @@ class ProjectController extends Controller
 
         $project->load(['columns' => function ($query) {
             $query->orderBy('position')->with(['tasks' => function ($query) {
-                $query->orderBy('position');
+                $query->orderBy('position')->with(['assignees' => function ($q) {
+                    $q->where('is_archived', false)->with('user');
+                }]);
             }]);
         }]);
 

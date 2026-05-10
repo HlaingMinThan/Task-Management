@@ -22,7 +22,7 @@ A Kanban-style project management application built with **Laravel 13**, **Inert
 | Backend | PHP 8.3, Laravel 13 |
 | Frontend | Vue 3, TypeScript, Inertia.js v3 |
 | Styling | Tailwind CSS v4 |
-| Database | SQLite (local), configurable for MySQL/PostgreSQL |
+| Database | MySQL (configurable for PostgreSQL) |
 | Build Tool | Vite 8 |
 | Routing (typed) | Laravel Wayfinder |
 | Testing | Pest v4 |
@@ -34,7 +34,7 @@ A Kanban-style project management application built with **Laravel 13**, **Inert
 
 Before getting started, make sure you have the following installed:
 
-- **PHP** `>= 8.3` with the `pdo_sqlite` extension enabled
+- **PHP** `>= 8.3` with the `pdo_mysql` extension enabled
 - **Composer** `>= 2.x`
 - **Node.js** `>= 20.x`
 - **npm** `>= 10.x`
@@ -65,14 +65,11 @@ php artisan key:generate
 
 ### 4. Set up the database
 
-The project uses SQLite by default — no database server needed.
+The project uses MySQL by default. Configure your database details in the `.env` file, then run:
 
 ```bash
-touch database/database.sqlite
 php artisan migrate
 ```
-
-> **Using MySQL or PostgreSQL instead?** Update the `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` values in your `.env` file, then run `php artisan migrate`.
 
 ### 5. Install JavaScript dependencies
 
