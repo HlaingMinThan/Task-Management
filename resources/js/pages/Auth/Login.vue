@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3'
-import { login, register } from '@/routes'
-import { request as passwordRequest } from '@/routes/password'
 import InputLabel from '@/components/InputLabel.vue'
 import TextInput from '@/components/TextInput.vue'
-import InputError from '@/components/InputError.vue'
+import { login, register } from '@/routes'
+import { request as passwordRequest } from '@/routes/password'
 
 const form = useForm({
   email: '',

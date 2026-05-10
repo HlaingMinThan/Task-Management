@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
+import { VueDraggable } from 'vue-draggable-plus';
 import {
     update,
     destroy,
 } from '@/actions/App/Http/Controllers/ColumnController';
 import { reorder as reorderTasks } from '@/actions/App/Http/Controllers/TaskController';
 import DeleteModal from '@/components/DeleteModal.vue';
-import TaskCard from './TaskCard.vue';
 import { useBoardFilters } from '../composables/useBoardFilters';
+import TaskCard from './TaskCard.vue';
 import TaskFormModal from './TaskFormModal.vue';
-import { VueDraggable } from 'vue-draggable-plus';
 
 const props = defineProps<{
     projectId: number;
@@ -35,7 +35,7 @@ const {
     search,
     status: filterStatus,
     assigned,
-    due,
+    dueDate,
     overdue,
     selectedTaskId,
 } = useBoardFilters();
@@ -47,11 +47,13 @@ const filteredTasks = computed(() => {
     const endOfToday = new Date(startOfToday);
     endOfToday.setHours(23, 59, 59, 999);
 
-    const startOfWeek = new Date(startOfToday);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Sunday start
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    const target = dueDate.value ? new Date(dueDate.value) : null;
+    let targetEnd: Date | null = null;
+    if (target) {
+        target.setHours(0, 0, 0, 0);
+        targetEnd = new Date(target);
+        targetEnd.setHours(23, 59, 59, 999);
+    }
 
     return tasks.value.filter((task: any) => {
         // Only tasks that belong to this column are already in tasks list
@@ -59,14 +61,19 @@ const filteredTasks = computed(() => {
         // Status filter: column id match (status is column id)
         if (filterStatus.value) {
             // if the selected status (column id) doesn't match this column, hide all tasks
-            if (Number(filterStatus.value) !== props.column.id) return false;
+            if (Number(filterStatus.value) !== props.column.id) {
+return false;
+}
         }
 
         // Search filter: check title and description
         if (q) {
             const inTitle = (task.title || '').toLowerCase().includes(q);
             const inDesc = (task.description || '').toLowerCase().includes(q);
-            if (!inTitle && !inDesc) return false;
+
+            if (!inTitle && !inDesc) {
+return false;
+}
         }
 
         // Assigned filter
@@ -74,34 +81,38 @@ const filteredTasks = computed(() => {
             if (assigned.value === 'me') {
                 // If task.assigned_user_id exists, compare to 'me' placeholder not resolvable client-side; skip if not present
                 // For now, only show tasks with assigned_user_id === 'me' string
-                if (String(task.assigned_user_id || '') !== 'me') return false;
+                if (String(task.assigned_user_id || '') !== 'me') {
+return false;
+}
             } else {
                 if (
                     String(task.assigned_user_id || '') !==
                     String(assigned.value)
-                )
-                    return false;
+                ) {
+return false;
+}
             }
         }
 
-        // Due date filter
-        if (due.value) {
+        // Due date filter (range)
+        if (target) {
             if (!task.due_date) return false;
             const dueDate = new Date(task.due_date);
-            if (due.value === 'today') {
-                if (dueDate < startOfToday || dueDate > endOfToday)
-                    return false;
-            } else if (due.value === 'week') {
-                if (dueDate < startOfWeek || dueDate > endOfWeek) return false;
-            }
+            if (dueDate < target || (targetEnd && dueDate > targetEnd)) return false;
         }
 
         // Overdue toggle
         if (overdue.value) {
-            if (!task.due_date) return false;
+            if (!task.due_date) {
+return false;
+}
+
             const dueDate = new Date(task.due_date);
             const isOver = dueDate < new Date(new Date().setHours(0, 0, 0, 0));
-            if (!isOver) return false;
+
+            if (!isOver) {
+return false;
+}
         }
 
         return true;
@@ -112,15 +123,24 @@ const filteredTasks = computed(() => {
 watch(
     () => selectedTaskId.value,
     (id) => {
-        if (!id) return;
+        if (!id) {
+return;
+}
+
         const el = document.getElementById(`task-${id}`);
-        if (!el) return;
+
+        if (!el) {
+return;
+}
+
         // ensure the element is visible within this column's scrollable area
         // find the nearest scrollable ancestor (the column body)
         let parent: HTMLElement | null = el.parentElement;
+
         while (parent && !parent.classList.contains('overflow-y-auto')) {
             parent = parent.parentElement;
         }
+
         if (parent) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
@@ -157,6 +177,7 @@ function saveEdit() {
     if (!form.title || form.title === props.column.title) {
         isEditing.value = false;
         form.title = props.column.title;
+
         return;
     }
 

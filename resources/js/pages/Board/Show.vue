@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { VueDraggable } from 'vue-draggable-plus';
 import {
     store,
     reorder,
 } from '@/actions/App/Http/Controllers/ColumnController';
-import KanbanColumn from './components/KanbanColumn.vue';
 import FilterBar from './components/FilterBar.vue';
-import { useForm } from '@inertiajs/vue3';
-import { VueDraggable } from 'vue-draggable-plus';
+import KanbanColumn from './components/KanbanColumn.vue';
 
 const props = defineProps<{
     project: {

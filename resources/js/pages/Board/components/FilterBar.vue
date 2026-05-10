@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import SearchFilterModal from './SearchFilterModal.vue';
 import { usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { useBoardFilters } from '../composables/useBoardFilters';
+import SearchFilterModal from './SearchFilterModal.vue';
 
 const page = usePage() as any;
-const { search, status, assigned, due, overdue, clear, selectTask } =
-    useBoardFilters();
+const { search } = useBoardFilters();
 
 const showModal = ref(false);
 
@@ -15,11 +14,6 @@ function onSearchFocus() {
     showModal.value = true;
 }
 
-function clearAll() {
-    clear();
-    // also clear any selection
-    selectTask(null);
-}
 </script>
 
 <template>

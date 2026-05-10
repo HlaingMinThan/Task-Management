@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { logout } from '@/routes';
+import { useDebounceFn } from '@vueuse/core';
+import { ref, watch } from 'vue';
+import { destroy } from '@/actions/App/Http/Controllers/ProjectController';
+import DeleteModal from '@/Components/DeleteModal.vue';
 import ProjectCard from '@/Components/ProjectCard.vue';
 import ProjectFormModal from '@/Components/ProjectFormModal.vue';
-import DeleteModal from '@/Components/DeleteModal.vue';
-import { destroy } from '@/actions/App/Http/Controllers/ProjectController';
-import { useDebounceFn } from '@vueuse/core';
+import { logout } from '@/routes';
 
 const props = defineProps<{
     projects: Array<{

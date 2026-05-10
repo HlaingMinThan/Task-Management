@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch } from 'vue';
+import { onMounted, onBeforeUnmount, watch, ref, computed } from 'vue';
 import { useBoardFilters } from '../composables/useBoardFilters';
 
 const props = defineProps({
@@ -9,23 +9,17 @@ const props = defineProps({
 
 const emit = defineEmits<{ (e: 'update:show', value: boolean): void }>();
 
-const {
-    search,
-    status,
-    assigned,
-    due,
-    overdue,
-    clear,
-    selectTask,
-    selectedTaskId,
-} = useBoardFilters();
+const { search, status, assigned, dueDate, overdue, clear, selectTask } =
+    useBoardFilters();
 
 function close() {
     emit('update:show', false);
 }
 
 function onKey(e: KeyboardEvent) {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') {
+close();
+}
 }
 
 onMounted(() => {
@@ -35,7 +29,6 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKey);
 });
 
-import { ref } from 'vue';
 const inputRef = ref<HTMLInputElement | null>(null);
 
 watch(
@@ -49,7 +42,6 @@ watch(
 );
 
 // compute results across all columns/tasks in the project using same filters as columns
-import { computed } from 'vue';
 
 const results = computed(() => {
     const q = (search.value || '').toLowerCase().trim();
@@ -58,14 +50,15 @@ const results = computed(() => {
     const endOfToday = new Date(startOfToday);
     endOfToday.setHours(23, 59, 59, 999);
 
-    const startOfWeek = new Date(startOfToday);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    const target = dueDate.value ? new Date(dueDate.value) : null;
+    if (target) {
+        target.setHours(0, 0, 0, 0);
+        var targetEnd = new Date(target);
+        targetEnd.setHours(23, 59, 59, 999);
+    }
 
     const cols = props.project.columns || [];
-    let allTasks: Array<any> = [];
+    const allTasks: Array<any> = [];
     cols.forEach((c: any) => {
         (c.tasks || []).forEach((t: any) =>
             allTasks.push({ ...t, columnId: c.id, columnTitle: c.title }),
@@ -74,43 +67,50 @@ const results = computed(() => {
 
     return allTasks.filter((task: any) => {
         // status filter: match column id if set
-        if (status.value && Number(status.value) !== task.columnId)
-            return false;
+        if (status.value && Number(status.value) !== task.columnId) {
+return false;
+}
 
         if (q) {
             const inTitle = (task.title || '').toLowerCase().includes(q);
             const inDesc = (task.description || '').toLowerCase().includes(q);
-            if (!inTitle && !inDesc) return false;
+
+            if (!inTitle && !inDesc) {
+return false;
+}
         }
 
         if (assigned.value) {
             if (assigned.value === 'me') {
-                if (String(task.assigned_user_id || '') !== 'me') return false;
+                if (String(task.assigned_user_id || '') !== 'me') {
+return false;
+}
             } else {
                 if (
                     String(task.assigned_user_id || '') !==
                     String(assigned.value)
-                )
-                    return false;
+                ) {
+return false;
+}
             }
         }
 
-        if (due.value) {
+        if (target) {
             if (!task.due_date) return false;
-            const dueDate = new Date(task.due_date);
-            if (due.value === 'today') {
-                if (dueDate < startOfToday || dueDate > endOfToday)
-                    return false;
-            } else if (due.value === 'week') {
-                if (dueDate < startOfWeek || dueDate > endOfWeek) return false;
-            }
+            const dueDateVal = new Date(task.due_date);
+            if (dueDateVal < target || dueDateVal > targetEnd) return false;
         }
 
         if (overdue.value) {
-            if (!task.due_date) return false;
+            if (!task.due_date) {
+return false;
+}
+
             const dueDate = new Date(task.due_date);
-            if (!(dueDate < new Date(new Date().setHours(0, 0, 0, 0))))
-                return false;
+
+            if (!(dueDate < new Date(new Date().setHours(0, 0, 0, 0)))) {
+return false;
+}
         }
 
         return true;
@@ -184,14 +184,7 @@ function clickResult(task: any) {
                         <option value="me">Me</option>
                     </select>
 
-                    <select
-                        v-model="due"
-                        class="rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-white"
-                    >
-                        <option value="">Any due date</option>
-                        <option value="today">Today</option>
-                        <option value="week">This week</option>
-                    </select>
+                    <input v-model="dueDate" type="date" class="rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-white" />
 
                     <label
                         class="inline-flex items-center space-x-2 text-sm text-slate-300"

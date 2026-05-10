@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3'
-import { register, login } from '@/routes'
+import InputError from '@/components/InputError.vue'
 import InputLabel from '@/components/InputLabel.vue'
 import TextInput from '@/components/TextInput.vue'
-import InputError from '@/components/InputError.vue'
+import { register, login } from '@/routes'
 
 const form = useForm({
   name: '',

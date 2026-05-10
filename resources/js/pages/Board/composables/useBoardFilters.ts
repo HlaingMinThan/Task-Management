@@ -1,9 +1,9 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 const search = ref('')
 const status = ref('')
 const assigned = ref('')
-const due = ref('') // '', 'today', 'week'
+const dueDate = ref('')
 const overdue = ref(false)
 const selectedTaskId = ref<number | null>(null)
 
@@ -16,7 +16,7 @@ export function useBoardFilters() {
         search.value = ''
         status.value = ''
         assigned.value = ''
-        due.value = ''
+    dueDate.value = ''
         overdue.value = false
         selectedTaskId.value = null
     }
@@ -25,7 +25,7 @@ export function useBoardFilters() {
         search,
         status,
         assigned,
-        due,
+    dueDate,
         overdue,
         selectedTaskId,
         selectTask,

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import {
     store,
     update,
     destroy,
 } from '@/actions/App/Http/Controllers/TaskController';
+import DeleteModal from '@/components/DeleteModal.vue';
+import InputError from '@/components/InputError.vue';
 import InputLabel from '@/components/InputLabel.vue';
 import TextInput from '@/components/TextInput.vue';
-import InputError from '@/components/InputError.vue';
-import DeleteModal from '@/components/DeleteModal.vue';
 
 const props = defineProps<{
     show: boolean;
@@ -71,7 +71,10 @@ function submit() {
 const isDeleteModalOpen = ref(false);
 
 function handleDelete() {
-    if (!props.task) return;
+    if (!props.task) {
+return;
+}
+
     isDeleteModalOpen.value = true;
 }
 </script>
