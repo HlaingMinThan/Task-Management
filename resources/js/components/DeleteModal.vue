@@ -16,7 +16,9 @@ const emit = defineEmits<{
 const form = useForm({})
 
 function deleteItem() {
-    if (!props.url) return
+    if (!props.url) {
+return
+}
     
     form.delete(props.url, {
         onSuccess: () => {

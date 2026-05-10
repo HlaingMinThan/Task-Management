@@ -46,14 +46,40 @@ class ProjectController extends Controller
     {
         Gate::authorize('view', $project);
 
-        $project->load(['columns' => function ($query) {
-            $query->orderBy('position')->with(['tasks' => function ($query) {
-                $query->orderBy('position');
+        // Read filters from request safely
+        $filters = request()->only(['q', 'status', 'assigned_user_id', 'due_from', 'due_to', 'overdue']);
+
+        $q = $filters['q'] ?? null;
+        $status = $filters['status'] ?? null;
+        $assigned = $filters['assigned_user_id'] ?? null;
+        $dueFrom = $filters['due_from'] ?? null;
+        $dueTo = $filters['due_to'] ?? null;
+        $overdue = isset($filters['overdue']) && $filters['overdue'];
+
+        $project->load(['columns' => function ($query) use ($q, $status, $assigned, $dueFrom, $dueTo, $overdue) {
+            $query->orderBy('position')->with(['tasks' => function ($query) use ($q, $status, $assigned, $dueFrom, $dueTo, $overdue) {
+                // Only tasks that belong to this project (redundant but safe)
+                $query->where('project_id', request()->route('project')->id)
+                    ->orderBy('position')
+                    ->when($q, fn ($q2) => $q2->search($q))
+                    ->when($status, fn ($q2, $status) => $q2->where('column_id', $status))
+                    ->when(isset($assigned) && $assigned !== '', function ($q2) use ($assigned) {
+                        if ($assigned === 'me') {
+                            $q2->assignedTo(auth()->id());
+                        } else {
+                            $q2->assignedTo($assigned);
+                        }
+                    })
+                    ->when($dueFrom || $dueTo, function ($q2) use ($dueFrom, $dueTo) {
+                        $q2->dueBetween($dueFrom, $dueTo);
+                    })
+                    ->when($overdue, fn ($q2) => $q2->overdue());
             }]);
         }]);
 
         return inertia('Board/Show', [
             'project' => $project,
+            'filters' => $filters,
         ]);
     }
 
