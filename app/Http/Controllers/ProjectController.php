@@ -52,6 +52,17 @@ class ProjectController extends Controller
             }]);
         }]);
 
+        // Append the 'status' and 'completed_at' properties to the payload
+        $project->columns->each(function ($column) {
+            $column->tasks->each(function ($task) use ($column) {
+                // Convert column title to lowercase for the status
+                $task->status = strtolower($column->title);
+                
+                // Use the updated_at timestamp as the completion time
+                $task->completed_at = $task->updated_at;
+            });
+        });
+
         return inertia('Board/Show', [
             'project' => $project,
         ]);
